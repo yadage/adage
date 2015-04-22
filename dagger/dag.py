@@ -31,7 +31,7 @@ def random_dag(nodes, edges):
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(10*random.random())
-  if random.random() < 0.5:
+  if random.random() < 1:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
@@ -54,8 +54,11 @@ def node_ran_and_failed(dag,node):
   ready = dag.node[node]['result'].ready() if submitted else False
   successful = dag.node[node]['result'].successful() if ready else False
   log.debug("node {}: submitted: {}, ready: {}, successful: {}".format(node,submitted,ready,successful))
-  if submitted and ready and not successful:
-    return True
+
+  if (submitted and ready):
+    if not successful:
+      log.debug('node {}: ran {}, failed {}'.format(node,submitted and ready,successful) )
+      return True
   return False
 
 def upstream_ok(dag,node):
@@ -69,13 +72,16 @@ def upstream_failure(dag,node):
   upstream = dag.predecessors(node)
   if not upstream:
     return False
-  return any(node_ran_and_failed(dag,x) for x in upstream)
+
+  upstream_status = [node_ran_and_failed(dag,x) or upstream_failure(dag,x) for x in upstream]
+  log.debug('upstream status: {}'.format(upstream_status))
+  return any(upstream_status)
 
 import IPython
 
 def nodes_left(dag):
-  nodes_with_hope = [node for node in dag.nodes() if not upstream_failure(dag,node)]
-  nodes_not_running = [dag.node[node] for node in nodes_with_hope if not dag.node[node].has_key('result')]
+  nodes_we_could_run = [node for node in dag.nodes() if not upstream_failure(dag,node)]
+  nodes_not_running = [dag.node[node] for node in nodes_we_could_run if not dag.node[node].has_key('result')]
   if nodes_not_running:
     log.info('{} nodes that could be run are left.'.format(len(nodes_not_running)))
     return True
@@ -87,6 +93,13 @@ def main():
 
   dag = random_dag(3,2)
 
+  dag = nx.DiGraph()
+  for i in range(3):
+    dag.add_node(i)
+    
+  dag.add_edge(0,1)
+  dag.add_edge(1,2)
+  
   nx.write_dot(dag, 'dag.dot')
   
   for node in nx.topological_sort(dag):
@@ -109,16 +122,16 @@ def main():
         log.info('submitting node: {}'.format(node))
         result = submit(hello,('workdir_node_{}'.format(node),))
         dag.node[node].update(result = result)
-        
-        
-    time.sleep(1)
+      if upstream_failure(dag,node):
+        log.warning('not submitting node: {} due to upstream failure'.format(node))
+    time.sleep(4)
   
   #wait for all results to finish
   for node in dag.nodes():
     if dag.node[node].has_key('result'):
       dag.node[node]['result'].wait()
 
-  print "done"
+  log.info('all running jobs are finished.')
 
 if __name__=='__main__':
   main()
