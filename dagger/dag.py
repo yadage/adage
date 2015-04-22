@@ -3,7 +3,7 @@ import time
 import random
 import networkx as nx
 import subprocess
-
+import uuid
 import logging
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT,level=logging.INFO)
@@ -15,6 +15,12 @@ def random_dag(nodes, edges):
     G = nx.DiGraph()
     for i in range(nodes):
         G.add_node(i)
+        G.node[i].update(
+          nodeid = str(uuid.uuid1()),
+          taskname = 'hello',
+          args = ('workdir_node_{}'.format(i),),
+          kwargs = {}
+        )
     while edges > 0:
         a = random.randint(0,nodes-1)
         b=a
@@ -28,13 +34,42 @@ def random_dag(nodes, edges):
             G.remove_edge(a,b)
     return G
 
-def hello(workdir):
+def hello(workdir,*args,**kwargs):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(10*random.random())
-  if random.random() < 1:
+  
+  log.info('kwargs: {}'.format(kwargs))
+
+  if random.random() < 0:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
+
+tasks = {}
+tasks['hello'] = hello
+
+def node_present(nodeid,dag):
+  parent = filter(lambda n:dag.node[n]['nodeid'] == nodeid,dag.nodes())
+  if not parent:
+    return False
+  return True
+
+def schedule_after_this(nodeid,taskinfo,dag):
+  parent = filter(lambda n:dag.node[n]['nodeid'] == nodeid,dag.nodes())
+  assert len(parent) == 1
+  
+  parentnr = parent[0]
+  parent = dag.node[parentnr]
+
+  nodenr = len(dag.nodes())
+  dag.add_node(nodenr)
+  dag.node[nodenr].update(
+    nodeid = str(uuid.uuid1()),
+    taskname = 'hello',
+    args = ('dynamic_node_{}'.format(nodenr),),
+    kwargs = {}
+  )
+  dag.add_edge(parentnr,nodenr)
     
 def setup():  
   pool = multiprocessing.Pool(4)
@@ -89,26 +124,44 @@ def nodes_left(dag):
     log.info('no nodes can be run anymore')
     return False
 
+def apply_rule(dag,ruleset,ruletoapply):
+  rulename = ruletoapply[0]
+  ruleinfo = ruletoapply[1]
+
+  predkwargs = ruleinfo['predicate']['kwargs'].copy()
+  predkwargs.update(dag = dag)
+
+  if(ruleset[rulename]['predicate'](*ruleinfo['predicate']['args'],**predkwargs)):
+    bodykwargs = ruleinfo['body']['kwargs'].copy()
+    bodykwargs.update(dag = dag)
+    ruleset[rulename]['body'](*ruleinfo['body']['args'],**bodykwargs)
+
 def main():
 
   dag = random_dag(3,2)
 
-  dag = nx.DiGraph()
-  for i in range(3):
-    dag.add_node(i)
-    
-  dag.add_edge(0,1)
-  dag.add_edge(1,2)
-  
-  nx.write_dot(dag, 'dag.dot')
+
+  ruleset = {}
+  ruleset['schedule_after_this'] = {'predicate':node_present,'body':schedule_after_this}
+
+
+  rules = []
+  rules += [['schedule_after_this',{'predicate':{'args':[dag.node[1]['nodeid'],],'kwargs':{} },
+                                   'body': {'args':[dag.node[1]['nodeid'],None],'kwargs':{} }
+                                   }
+           ]]
+
+
+  nx.write_dot(dag, 'dag1.dot')
+  with open('dag1.png','w') as pngfile:
+    subprocess.call(['dot','-Tpng','dag1.dot'], stdout = pngfile)
+
   
   for node in nx.topological_sort(dag):
     print '{} depends on {}'.format(node,dag.predecessors(node))
     
   submit = setup()
 
-  with open('dag.png','w') as pngfile:
-    subprocess.call(['dot','-Tpng','dag.dot'], stdout = pngfile)
 
 
   #while we have nodes that can be submitted
@@ -120,11 +173,23 @@ def main():
         continue;
       if upstream_ok(dag,node):
         log.info('submitting node: {}'.format(node))
-        result = submit(hello,('workdir_node_{}'.format(node),))
+        nodedict = dag.node[node]
+
+
+        nodedict['kwargs'].update(nodeid = nodedict['nodeid'])
+
+        log.info(nodedict)
+        
+        result = submit(tasks[nodedict['taskname']],nodedict['args'],nodedict['kwargs'])
         dag.node[node].update(result = result)
       if upstream_failure(dag,node):
         log.warning('not submitting node: {} due to upstream failure'.format(node))
-    time.sleep(4)
+    time.sleep(1)
+    if rules:
+      log.info('applying a rule!')
+      apply_rule(dag,ruleset,rules[0])
+      rules.pop(0)
+    
   
   #wait for all results to finish
   for node in dag.nodes():
@@ -132,6 +197,11 @@ def main():
       dag.node[node]['result'].wait()
 
   log.info('all running jobs are finished.')
+
+  nx.write_dot(dag, 'dag2.dot')
+  with open('dag2.png','w') as pngfile:
+    subprocess.call(['dot','-Tpng','dag2.dot'], stdout = pngfile)
+
 
 if __name__=='__main__':
   main()
