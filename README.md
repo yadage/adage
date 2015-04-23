@@ -23,4 +23,4 @@ There are a couple of rule that the rules need to obey themselves in order to ma
     - wait until a certain number of nodes are present in the DAG (say )
 	- select a certain set of nodes by their unique id (useful to attach a sub-DAG to a existing node from within that node)
 	
-- the only valid edges that you can dynamically add are once that point away from existing nodes to new nodes.. edges directed *towards* existing nodes would introduce new dependencies which were not present before and so that job might have already run, or be currently running
+- the only valid edges that you can dynamically added are ones that point away from existing nodes to new nodes.. edges directed *towards* existing nodes would introduce new dependencies which were not present before and so that job might have already run, or be currently running
