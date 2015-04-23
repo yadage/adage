@@ -4,12 +4,19 @@ import random
 import networkx as nx
 import subprocess
 import uuid
+import glob
 import logging
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT,level=logging.INFO)
 
 log = logging.getLogger(__name__)
+
+def print_next_dag(dag):
+  nextnr = 0
+  if glob.glob('*.dot'):
+    nextnr = max([int(s.replace('dag','').replace('.dot','')) for s in  glob.glob('*.dot')])+1
+  print_dag(dag,'dag{}'.format(nextnr))
 
 def print_dag(dag,name):
   dotfilename = '{}.dot'.format(name)
@@ -71,6 +78,22 @@ def newtask():
 tasks['newtask'] = newtask
 
 
+validrules = {}
+
+def node_present(nodenr,dag):
+  return nodenr in dag.nodes()
+
+validrules['node_present'] = node_present
+
+def schedule_after_this(parentnr,taskinfo,dag):
+  newnode = mknode(dag,nodename = 'dynamic_node',
+                     taskname = 'newtask'
+                  )
+  dag.add_edge(parentnr,newnode['nodenr'])
+
+validrules['schedule_after_this'] = schedule_after_this
+
+
 def validate_finished_dag(dag):
   for node in dag:
     nodedict = dag.node[node]
@@ -79,15 +102,6 @@ def validate_finished_dag(dag):
       if not sanity:
         return False
   return True
-
-def node_present(nodenr,dag):
-  return nodenr in dag.nodes()
-
-def schedule_after_this(parentnr,taskinfo,dag):
-  newnode = mknode(dag,nodename = 'dynamic_node',
-                     taskname = 'newtask'
-                  )
-  dag.add_edge(parentnr,newnode['nodenr'])
     
 def setup():  
   pool = multiprocessing.Pool(4)
@@ -147,42 +161,35 @@ def nodes_left(dag):
     log.info('no nodes can be run anymore')
     return False
 
-def rule_applicable(dag,ruleset,ruletoapply):
-  rulename, ruleinfo = ruletoapply
+#similar idea as in celery
+def signature(name,*args,**kwargs):
+  return [name,{'args':args,'kwargs':kwargs}]
 
-  predkwargs = ruleinfo['predicate']['kwargs'].copy()
-  predkwargs.update(dag = dag)
+def apply_rule(dag,ruletoapply):
+  body_name,body_details = ruletoapply[1]
+  extended_kwargs = body_details['kwargs'].copy()
+  extended_kwargs.update(dag = dag)
+  return validrules[body_name](*body_details['args'],**extended_kwargs)
 
-  return ruleset[rulename]['predicate'](*ruleinfo['predicate']['args'],**predkwargs)
-  
-
-def apply_rule(dag,ruleset,ruletoapply):
-  rulename, ruleinfo = ruletoapply
-  bodykwargs = ruleinfo['body']['kwargs'].copy()
-  bodykwargs.update(dag = dag)
-  ruleset[rulename]['body'](*ruleinfo['body']['args'],**bodykwargs)
+def rule_applicable(dag,ruletoapply):
+  predicate_name,predicate_details = ruletoapply[0]  
+  extended_kwargs = predicate_details['kwargs'].copy()
+  extended_kwargs.update(dag = dag)
+  return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
 def main():
 
-  dag = random_dag(3,2)
+  dag = random_dag(5,3)
 
 
-  ruleset = {}
-  ruleset['schedule_after_this'] = {'predicate':node_present,'body':schedule_after_this}
 
 
   rules = []
-  rules += [['schedule_after_this',{'predicate':{'args':[1,],'kwargs':{} },
-                                   'body': {'args':[1,None],'kwargs':{} }
-                                   }
-            ],
-            ['schedule_after_this',{'predicate':{'args':[3,],'kwargs':{} },
-                                               'body': {'args':[3,None],'kwargs':{} }
-                                               }
-                        ]
+  rules += [ (signature('node_present',1), signature('schedule_after_this',1,None)),
+             (signature('node_present',5), signature('schedule_after_this',5,None))
            ]
 
-  print_dag(dag, 'dag1')
+  print_next_dag(dag)
 
   for node in nx.topological_sort(dag):
     log.info('{} depends on {}'.format(node,dag.predecessors(node)))
@@ -207,10 +214,11 @@ def main():
 
     #iterate rules in reverse so we can safely pop items
     for i,rule in reversed([x for x in enumerate(rules)]):
-      if rule_applicable(dag,ruleset,rule):
+      if rule_applicable(dag,rule):
         log.info('applying a rule!')
-        apply_rule(dag,ruleset,rule)
+        apply_rule(dag,rule)
         rules.pop(i)
+        print_next_dag(dag)
         
     time.sleep(1)
 
@@ -225,8 +233,6 @@ def main():
     node_status(dag,node)
 
   log.info('all running jobs are finished.')
-
-  print_dag(dag, 'dag2')
 
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
