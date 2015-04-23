@@ -6,6 +6,7 @@ import subprocess
 import uuid
 import glob
 import logging
+import IPython
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT,level=logging.INFO)
@@ -24,11 +25,11 @@ def print_dag(dag,name):
   with open('{}.png'.format(name),'w') as pngfile:
     subprocess.call(['dot','-Tpng',dotfilename], stdout = pngfile)
   
-def mknode(dag,nodename = 'node',taskname = '',taskargs = (),taskkwargs = {}):
+def mknode(dag,nodename = 'node',taskname = None,taskargs = (),taskkwargs = {}):
+  assert taskname
   nodenr = len(dag.nodes())
   dag.add_node(nodenr,
     nodenr = nodenr,
-    nodeid = str(uuid.uuid1()),
     nodename = nodename,
     taskname = taskname,
     args = taskargs,
@@ -60,38 +61,44 @@ def random_dag(nodes, edges):
 
 tasks = {}
 
+def daggertask(func):
+  qualname = None
+  if func.__module__ != '__main__':
+    qualname = '{}.{}'.format(func.__module__,func.__name__)
+  else:
+    qualname = func.__name__
+  tasks[qualname] = func
+  return func
+
+@daggertask
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(10*random.random())
-  
-  if random.random() < 0:
+  if random.random() < 0.3:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
 
-
-tasks['hello'] = hello
-
+@daggertask
 def newtask():
   log.info('doing some other task')
   time.sleep(5*random.random())
-tasks['newtask'] = newtask
-
 
 validrules = {}
 
-def node_present(nodenr,dag):
-  return nodenr in dag.nodes()
+def nodes_present(nodenrs,dag):
+  return all(n in dag.nodes() for n in nodenrs)
 
-validrules['node_present'] = node_present
+validrules['nodes_present'] = nodes_present
 
-def schedule_after_this(parentnr,taskinfo,dag):
+def schedule_after_these(parentnrs,taskinfo,dag):
   newnode = mknode(dag,nodename = 'dynamic_node',
                      taskname = 'newtask'
                   )
-  dag.add_edge(parentnr,newnode['nodenr'])
+  for parent in parentnrs:
+    dag.add_edge(parent,newnode['nodenr'])
 
-validrules['schedule_after_this'] = schedule_after_this
+validrules['schedule_after_these'] = schedule_after_these
 
 
 def validate_finished_dag(dag):
@@ -149,8 +156,6 @@ def upstream_failure(dag,node):
   log.debug('upstream status: {}'.format(upstream_status))
   return any(upstream_status)
 
-import IPython
-
 def nodes_left(dag):
   nodes_we_could_run = [node for node in dag.nodes() if not upstream_failure(dag,node)]
   nodes_not_running = [dag.node[node] for node in nodes_we_could_run if not dag.node[node].has_key('result')]
@@ -182,11 +187,9 @@ def main():
   dag = random_dag(5,3)
 
 
-
-
   rules = []
-  rules += [ (signature('node_present',1), signature('schedule_after_this',1,None)),
-             (signature('node_present',5), signature('schedule_after_this',5,None))
+  rules += [ (signature('nodes_present',[1]), signature('schedule_after_these',[1],None)),
+             (signature('nodes_present',[5,1]), signature('schedule_after_these',[5,1],None))
            ]
 
   print_next_dag(dag)
@@ -219,6 +222,8 @@ def main():
         apply_rule(dag,rule)
         rules.pop(i)
         print_next_dag(dag)
+      else:
+        log.info('rule not ready yet')
         
     time.sleep(1)
 
@@ -238,5 +243,6 @@ def main():
     log.error('DAG execution not validating')
     raise RuntimeError
   log.info('execution valid.')
+
 if __name__=='__main__':
   main()
