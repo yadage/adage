@@ -12,4 +12,15 @@ Another example is that one might have a whole set of nodes that run a certain k
 
 ## Solution
 
-Generically, we want individual nodes to have a limited set of operations they can do on the DAG that they are part of. Specifically we can only allow queries on the structure of the DAG as well as append operations, nodes must not be able to remove nodes. The way we implement this is that we have a append-only record of scheduled rules. A rule is a pair of functions (predicate,body) that operate on the DAG. The predicate is a query function that inspects the graph to decide whether the DAG has enough information to apply the body (e.g. are edges of a certain type still possible to append or not?). If the DAG does have enough information the body which is an append-only operation on the DAG is applied, i.e. nodes and edges are added to the existing DAG. Periodically the list of rules is iterated to extend the DAG where possible.
+Generically, we want individual nodes to have a limited set of operations they can do on the DAG that they are part of. Specifically we can only allow queries on the structure of the DAG as well as append operations, nodes must not be able to remove nodes. The way we implement this is that we have a append-only record of scheduled rules. A rule is a pair of functions (predicate,body) that operate on the DAG. The predicate is a query function that inspects the graph to decide whether the DAG has enough information to apply the body (e.g. are edges of a certain type still possible to append or not?). If the DAG does have enough information the body which is an append-only operation on the DAG is applied, i.e. nodes are added . Periodically the list of rules is iterated to extend the DAG where possible.
+
+### Rules for Rules
+
+There are a couple of rule that the rules need to obey themselves in order to make 
+
+- it is the responsibility of the predicate to signal that all necessary nodes for the body are present in the DAG. Examples are:
+	- wait until  no nodes of a particular type could possibly be added to the DAG. This requires us to know what kind of edges are valid on a global level.
+    - wait until a certain number of nodes are present in the DAG (say )
+	- select a certain set of nodes by their unique id (useful to attach a sub-DAG to a existing node from within that node)
+	
+- the only valid edges that you can dynamically add are once that point away from existing nodes to new nodes.. edges directed *towards* existing nodes would introduce new dependencies which were not present before and so that job might have already run, or be currently running
