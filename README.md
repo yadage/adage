@@ -4,9 +4,9 @@ This is a small experimental package to see how one could describe workflows tha
 
 ## Problem
 
-Workflows can be comfortably represented by directed acyclic graphs (DAGs). But sometimes the precise structure of the graph is not known before the processing starts. Instead often one only has partial information of what kind of edges are possible.
+Workflows can be comfortably represented by directed acyclic graphs (DAGs). But sometimes the precise structure of the graph is not known before the processing starts. Instead often one only has partial information of what kind of edges are possible and depending on a certain result in a node the DAG might be appended with more nodes and edges.
 
-For example a depending on a certain result in a node the DAG might be appended with more nodes and edges. For example, one node (call it "node A") could be downloading a list of files, which can be processed in parallel. The DAG would therefore have one node for each file-processing (let's call them  "node_file_1" to "node_file_n") depending on "node A". Since the exact number of files is not known until run-time, we cannot map out the DAG beforehand. Also after this "map"-step one might want to have a "reduce"-step to merge the individual result. This can also only be scheduled after the number of "map"-nodes is known.
+For example, one node (call it "node A") could be downloading a list of files, which can be processed in parallel. The DAG would therefore have one node for each file-processing (let's call them  "node_file_1" to "node_file_n") depending on "node A". Since the exact number of files is not known until run-time, we cannot map out the DAG beforehand. Also after this "map"-step one might want to have a "reduce"-step to merge the individual result. This can also only be scheduled after the number of "map"-nodes is known.
 
 Another example is that one might have a whole set of nodes that run a certain kind of task (e.g. produce a PDF file). One could imagine wanting to have a "reduce"-type task which merges all these individual PDF files. While any given node does not know where else PDF-generating tasks are scheduled, one can wait until no edges to PDF-generating tasks are possible anymore to then append a PDF-merging node to the DAG.
 
