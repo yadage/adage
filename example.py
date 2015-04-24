@@ -24,9 +24,9 @@ def prepare(workdir):
 
 @daggertask
 def download(workdir):
-  #let's say we have 3 files
+  #let's say we have 4 files
   filelist = []
-  for i in range(3):
+  for i in range(4):
     filename = 'inputfile_{}.lhe'.format('{}'.format(i).zfill(3))
     filename = '{}/{}'.format(workdir,filename)
     open(filename, 'a').close()
@@ -53,13 +53,9 @@ def pythia(lhefilename):
 
 @daggertask
 def rivet(workdir,hepmcfiles):
-  #let's say we have 10 files
-  
   log.info('running rivet on these files: {}'.format(hepmcfiles))
-
   yodafilename = '{}/Rivet.yoda'.format(workdir)
   open(yodafilename, 'a').close()
-  
   chill()
   return yodafilename
 
@@ -78,7 +74,7 @@ def plotting(workdir,yodafile):
 @rulefunc
 def download_done(dag):
   for node in dag.nodes():
-    if dag.node[node]['taskname'] == download.taskname:
+    if dag.node[node]['nodename'] == 'download':
       if dagger.dag.node_status(dag,node):
         return True
   return False
@@ -87,27 +83,27 @@ def download_done(dag):
 def schedule_pythia(dag):
   download_node = None
   for node in dag.nodes():
-    if dag.node[node]['taskname'] == download.taskname:
+    if dag.node[node]['nodename'] == 'download':
       download_node = node
 
   lhefiles = dag.node[download_node]['result'].get()
 
   hepmcfiles = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
-  rivet_node = mknode(dag, nodename = 'rivet', sig = rivet.s(workdir = 'here', hepmcfiles = hepmcfiles))
+  rivet_node = mknode(dag, sig = rivet.s(workdir = 'here', hepmcfiles = hepmcfiles))
 
-  plotting_node = mknode(dag, nodename   = 'plotting', sig = plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'))
+  plotting_node = mknode(dag, sig = plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'))
 
   dag.add_edge(rivet_node['nodenr'],plotting_node['nodenr'])
 
   for lhe in lhefiles:
-    lhe_node = mknode(dag,nodename   = 'pythia',sig = pythia.s(lhefilename = lhe))
+    lhe_node = mknode(dag, sig = pythia.s(lhefilename = lhe))
     
     dag.add_edge(download_node,lhe_node['nodenr'])
     dag.add_edge(lhe_node['nodenr'],rivet_node['nodenr'])
-
+    
 def build_dag():
   dag = dagger.dag.mk_dag()
-  prepare_node = mknode(dag,nodename   = 'prepare', sig = prepare.s(workdir = 'here'))
+  prepare_node = mknode(dag,sig = prepare.s(workdir = 'here'))
 
   download_node = mknode(dag,nodename   = 'download', sig = download.s(workdir = 'here'))
   dag.add_edge(prepare_node['nodenr'],download_node['nodenr'])
