@@ -312,7 +312,7 @@ def rundag(dag,rules):
 
   print_next_dag(dag)
 
-  subprocess.call('convert -delay 200 $(ls *.png|sort) workflow.gif',shell = True)
+  subprocess.call('convert -delay 50 $(ls *.png|sort) workflow.gif',shell = True)
   for f in glob.glob('*.png'):
     os.remove(f)
   for f in glob.glob('*.dot'):
