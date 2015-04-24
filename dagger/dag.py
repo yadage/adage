@@ -10,7 +10,7 @@ import IPython
 import os
 
 FORMAT = '%(asctime)s %(message)s'
-logging.basicConfig(format=FORMAT,level=logging.INFO)
+logging.basicConfig(format=FORMAT,level=logging.WARNING)
 
 log = logging.getLogger(__name__)
 
@@ -59,9 +59,12 @@ def print_dag(dag,name):
 
   nx.write_dot(colorized,dotfilename)
   with open('{}.png'.format(name),'w') as pngfile:
-    subprocess.call(['dot','-Tpng','-Gsize=9,6\!','-Gdpi=100 ',dotfilename], stdout = pngfile)
-    subprocess.call(['convert',pngfilename,'-gravity','NorthEast','-background','white','-extent','900x600',pngfilename])
+    subprocess.call(['dot','-Tpng','-Gsize=18,12\!','-Gdpi=100 ',dotfilename], stdout = pngfile)
+    subprocess.call(['convert',pngfilename,'-gravity','North','-background','white','-extent','1800x1200',pngfilename])
 
+
+def mk_dag():
+  return nx.DiGraph()
 
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
@@ -109,6 +112,7 @@ def daggertask(func):
   else:
     qualname = func.__name__
   tasks[qualname] = func
+  func.taskname = qualname
   return func
 
 def rulefunc(func):
@@ -118,6 +122,7 @@ def rulefunc(func):
   else:
     qualname = func.__name__
   validrules[qualname] = func
+  func.rulename = qualname
   return func
 
 @daggertask
@@ -204,11 +209,25 @@ def upstream_failure(dag,node):
   log.debug('upstream status: {}'.format(upstream_status))
   return any(upstream_status)
 
-def nodes_left(dag):
+
+def node_running_or_waiting(dag,node):
+  nodedict = dag.node[node]
+  log.debug(nodedict)
+  running = 'result' in nodedict and not nodedict['result'].ready()
+  waiting = 'result' not in nodedict
+
+  log.debug('waiting: {} running {}'.format(waiting,running))
+  return running or waiting
+
+def nodes_left_or_rule(dag,rules):
   nodes_we_could_run = [node for node in dag.nodes() if not upstream_failure(dag,node)]
-  nodes_not_running = [dag.node[node] for node in nodes_we_could_run if not dag.node[node].has_key('result')]
-  if nodes_not_running:
-    log.info('{} nodes that could be run are left.'.format(len(nodes_not_running)))
+  nodes_running_or_waiting = [x for x in nodes_we_could_run if node_running_or_waiting(dag,x)]
+
+  if any(rule_applicable(dag,rule) for rule in rules):
+    return True
+
+  if nodes_running_or_waiting:
+    log.info('{} nodes that could be run are left.'.format(len(nodes_running_or_waiting)))
     return True
   else:
     log.info('no nodes can be run anymore')
@@ -228,18 +247,10 @@ def rule_applicable(dag,ruletoapply):
   predicate_name,predicate_details = ruletoapply[0]  
   extended_kwargs = predicate_details['kwargs'].copy()
   extended_kwargs.update(dag = dag)
+  log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-def main():
-
-  dag = random_dag(6,5)
-
-
-  rules = []
-  rules += [ (signature('nodes_present',[1]), signature('schedule_after_these',[1],note = 'depends on one')),
-             (signature('nodes_present',[4,1]), signature('schedule_after_these',[4,1],note = 'depends on two'))
-           ]
-
+def rundag(dag,rules):
   print_next_dag(dag)
 
   for node in nx.topological_sort(dag):
@@ -248,7 +259,17 @@ def main():
   submit = setup()
 
   #while we have nodes that can be submitted
-  while nodes_left(dag):
+  while nodes_left_or_rule(dag,rules):
+    #iterate rules in reverse so we can safely pop items
+    for i,rule in reversed([x for x in enumerate(rules)]):
+      if rule_applicable(dag,rule):
+        log.info('applying a rule!')
+        apply_rule(dag,rule)
+        rules.pop(i)
+        print_next_dag(dag)
+      else:
+        log.info('rule not ready yet')
+    
     for node in nx.topological_sort(dag):
       nodedict = dag.node[node]
       log.debug("working on node: {} with dict {}".format(node,nodedict))
@@ -262,32 +283,21 @@ def main():
 
       if upstream_failure(dag,node):
         log.warning('not submitting node: {} due to upstream failure'.format(node))
-
-    #iterate rules in reverse so we can safely pop items
-    for i,rule in reversed([x for x in enumerate(rules)]):
-      if rule_applicable(dag,rule):
-        log.info('applying a rule!')
-        apply_rule(dag,rule)
-        rules.pop(i)
-        print_next_dag(dag)
-      else:
-        log.info('rule not ready yet')
-        
+              
     time.sleep(1)
     print_next_dag(dag)
-    
 
   #wait for all results to finish
+  log.info('all running jobs are finished. waiting for running jobs..')
   for node in dag.nodes():
     if 'result' in dag.node[node]:
       dag.node[node]['result'].wait()
-
+  log.info('all done.')
 
   for node in dag.nodes():
     #check node status one last time
     node_status(dag,node)
 
-  log.info('all running jobs are finished. waiting for running jobs..')
   print_next_dag(dag)
 
   subprocess.call('echo $(ls *.png|sort)',shell = True)
@@ -302,6 +312,16 @@ def main():
     log.error('DAG execution not validating')
     raise RuntimeError
   log.info('execution valid.')
+
+def main():
+  dag = random_dag(6,5)
+
+
+  rules = []
+  rules += [ (signature('nodes_present',[1]), signature('schedule_after_these',[1],note = 'depends on one')),
+             (signature('nodes_present',[4,1]), signature('schedule_after_these',[4,1],note = 'depends on two'))
+           ]
+  rundag(dag,rules)
 
 if __name__=='__main__':
   main()
