@@ -124,7 +124,7 @@ def rulefunc(func):
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(2+5*random.random())
-  if random.random() < 0.2:
+  if random.random() < 0.3:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
@@ -232,7 +232,7 @@ def rule_applicable(dag,ruletoapply):
 
 def main():
 
-  dag = random_dag(8,5)
+  dag = random_dag(6,5)
 
 
   rules = []
