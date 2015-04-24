@@ -183,10 +183,14 @@ def node_status(dag,node):
 
   return submitted and ready and successful
 
+def result_of(nodedict):
+  return nodedict['result'].get()
+
 def node_ran_and_failed(dag,node):
-  submitted = dag.node[node].has_key('result')
-  ready = dag.node[node]['result'].ready() if submitted else False
-  successful = dag.node[node]['result'].successful() if ready else False
+  nodedict = dag.node[node]
+  submitted = 'result' in nodedict
+  ready = nodedict['result'].ready() if submitted else False
+  successful = nodedict['result'].successful() if ready else False
   log.debug("node {}: submitted: {}, ready: {}, successful: {}".format(node,submitted,ready,successful))
 
   if (submitted and ready):
@@ -211,6 +215,13 @@ def upstream_failure(dag,node):
   log.debug('upstream status: {}'.format(upstream_status))
   return any(upstream_status)
 
+def get_node_by_name(dag,nodename):
+  matching = [dag.node[x] for x in dag.nodes() if dag.node[x]['nodename'] == nodename]
+  return matching[0] if (len(matching) == 1) else None
+  
+def add_edge(dag,from_node,to_node):
+  dag.add_edge(from_node['nodenr'],to_node['nodenr'])
+  
 
 def node_running_or_waiting(dag,node):
   nodedict = dag.node[node]
@@ -297,8 +308,6 @@ def rundag(dag,rules):
     node_status(dag,node)
 
   print_next_dag(dag)
-
-  subprocess.call('echo $(ls *.png|sort)',shell = True)
 
   subprocess.call('convert -delay 200 $(ls *.png|sort) workflow.gif',shell = True)
   for f in glob.glob('*.png'):

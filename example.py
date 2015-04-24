@@ -2,6 +2,7 @@ import os
 import shutil
 import time
 import random
+from dagger.dag import daggertask
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -11,9 +12,6 @@ log = logging.getLogger(__name__)
 #dummy function to make stuff last randomly a bit longer
 def chill():
   time.sleep(2+5*random.random())
-
-from dagger.dag import daggertask,rulefunc,mknode,signature
-import dagger.dag
 
 @daggertask
 def prepare(workdir):
@@ -45,7 +43,7 @@ def pythia(lhefilename):
 
   chill()
 
-  if random.random() < 0.3:
+  if random.random() < 0.1:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
 
@@ -71,43 +69,4 @@ def plotting(workdir,yodafile):
   chill()
   return plotfilename
 
-@rulefunc
-def download_done(dag):
-  for node in dag.nodes():
-    if dag.node[node]['nodename'] == 'download':
-      if dagger.dag.node_status(dag,node):
-        return True
-  return False
-  
-@rulefunc
-def schedule_pythia(dag):
-  download_node = None
-  for node in dag.nodes():
-    if dag.node[node]['nodename'] == 'download':
-      download_node = node
 
-  lhefiles = dag.node[download_node]['result'].get()
-
-  hepmcfiles = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
-  rivet_node = mknode(dag, sig = rivet.s(workdir = 'here', hepmcfiles = hepmcfiles))
-
-  plotting_node = mknode(dag, sig = plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'))
-
-  dag.add_edge(rivet_node['nodenr'],plotting_node['nodenr'])
-
-  for lhe in lhefiles:
-    lhe_node = mknode(dag, sig = pythia.s(lhefilename = lhe))
-    
-    dag.add_edge(download_node,lhe_node['nodenr'])
-    dag.add_edge(lhe_node['nodenr'],rivet_node['nodenr'])
-    
-def build_dag():
-  dag = dagger.dag.mk_dag()
-  prepare_node = mknode(dag,sig = prepare.s(workdir = 'here'))
-
-  download_node = mknode(dag,nodename   = 'download', sig = download.s(workdir = 'here'))
-  dag.add_edge(prepare_node['nodenr'],download_node['nodenr'])
-
-  rules =  [ (download_done.s(), schedule_pythia.s()) ]
-
-  return dag,rules
