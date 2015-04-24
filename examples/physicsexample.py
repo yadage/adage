@@ -1,15 +1,18 @@
-import dagger.dag
-from dagger.dag import rulefunc,mknode,signature,get_node_by_name,result_of
+import dagger
+from dagger import rulefunc,mknode,signature,get_node_by_name,result_of
 
 #import some task functions that we'd like to run
-from example import prepare, download, rivet, pythia, plotting
+from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
+
+import logging
+logging.basicConfig(level=logging.INFO)
 
 @rulefunc
 def download_done(dag):
   #we can only run pythia once the donwload is done and we know hoe many LHE files we have
   download_node = get_node_by_name(dag,'download')
   if download_node:
-      return dagger.dag.node_status(dag,download_node['nodenr'])
+      return dagger.node_status(dag,download_node['nodenr'])
   return False
   
 @rulefunc
@@ -24,13 +27,15 @@ def schedule_pythia(dag):
   # we already know what the pythia result will look like so we don't need to wait for the nodes to run
   # to schedule them
   hepmcfiles    = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
-  
+
+  mcviz_node    = mknode(dag,mcviz.s(hepmcfile = hepmcfiles[0]), depends_on = pythia_nodes[0:1])
+
   #Rivet and then produce some plots.
   rivet_node    = mknode(dag,rivet.s(workdir = 'here', hepmcfiles = hepmcfiles), depends_on = pythia_nodes)
   plotting_node = mknode(dag,plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
     
 def build_initial_dag():
-  dag = dagger.dag.mk_dag()
+  dag = dagger.mk_dag()
 
   prepare_node  = mknode(dag,prepare.s(workdir = 'here'))
   download_node = mknode(dag,download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
@@ -43,7 +48,7 @@ def build_initial_dag():
   
 def main():
   dag,rules = build_initial_dag()
-  dagger.dag.rundag(dag,rules)
+  dagger.rundag(dag,rules, track = True)
 
 if __name__=='__main__':
   main()

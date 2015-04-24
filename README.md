@@ -28,8 +28,8 @@ There are a couple of rule that the rules need to obey themselves in order to ma
 ### Example
 
 Generic Example
-![example image](./example.gif "dynamically extended workflow")
+![example image](./examples/genericexample.gif "dynamically extended workflow")
 
 High Energy Physics Example
-![HEP image](./physicsworkflow.gif "dynamically extended physics workflow")
+![HEP image](./examples/physicsworkflow.gif "dynamically extended physics workflow")
 

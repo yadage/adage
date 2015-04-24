@@ -2,10 +2,9 @@ import os
 import shutil
 import time
 import random
-from dagger.dag import daggertask
+from dagger import daggertask
 
 import logging
-logging.basicConfig(level=logging.INFO)
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +47,19 @@ def pythia(lhefilename):
     raise IOError
 
   return hepmcfilename
+
+
+@daggertask
+def mcviz(hepmcfile):
+
+  svgfilename = '{}/mcviz.svg'.format(os.path.dirname(hepmcfile))
+  open(svgfilename, 'a').close()
+
+  log.info('running mcviz on : {} -> {}'.format(hepmcfile,svgfilename))
+
+  chill()
+
+  return svgfilename
 
 @daggertask
 def rivet(workdir,hepmcfiles):
