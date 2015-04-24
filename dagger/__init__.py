@@ -4,7 +4,6 @@ import networkx as nx
 import subprocess
 import glob
 import logging
-import IPython
 import os
 import shutil
 
