@@ -7,6 +7,7 @@ import uuid
 import glob
 import logging
 import IPython
+import os
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT,level=logging.INFO)
@@ -17,14 +18,50 @@ def print_next_dag(dag):
   nextnr = 0
   if glob.glob('*.dot'):
     nextnr = max([int(s.replace('dag','').replace('.dot','')) for s in  glob.glob('*.dot')])+1
-  print_dag(dag,'dag{}'.format(nextnr))
+  
+  padded = '{}'.format(nextnr).zfill(3)
+  print_dag(dag,'dag{}'.format(padded))
+  
+
+def colorize_graph(dag):
+  colorized = nx.DiGraph()
+  for node in nx.topological_sort(dag):
+
+    nodedict = dag.node[node].copy()
+    nodedict.pop('result',None)
+
+    if 'result' not in nodedict:
+      nodedict['result'] = 'grey'
+    if 'submitted' in nodedict and ('ready_by' not in nodedict):
+      nodedict['result'] = 'yellow'
+    if upstream_failure(dag,node):
+      nodedict['result'] = 'blue'
+    if node_ran_and_failed(dag,node):
+      nodedict['result'] = 'red'
+    if node_status(dag,node):
+      nodedict['result'] = 'green'
+    
+    colorized.add_node(node,nodedict)
+    for pre in dag.predecessors(node):
+      colorized.add_edge(pre,node)
+
+  for node in colorized.nodes():
+    nodedict = colorized.node[node]
+    label = '{}: {}/{}/{}'.format(nodedict['nodenr'],nodedict['taskname'],nodedict['args'],nodedict['kwargs'])
+    nodedict.update(style='filled',color = nodedict['result'],label = label)
+    
+  return colorized
 
 def print_dag(dag,name):
   dotfilename = '{}.dot'.format(name)
-  nx.write_dot(dag,dotfilename)
+  pngfilename = '{}.png'.format(name) 
+  colorized = colorize_graph(dag)
+
+  nx.write_dot(colorized,dotfilename)
   with open('{}.png'.format(name),'w') as pngfile:
-    subprocess.call(['dot','-Tpng',dotfilename], stdout = pngfile)
-  
+    subprocess.call(['dot','-Tpng','-Gsize=9,6\!','-Gdpi=100 ',dotfilename], stdout = pngfile)
+    subprocess.call(['convert',pngfilename,'-gravity','NorthEast','-background','white','-extent','900x600',pngfilename])
+
 def mknode(dag,nodename = 'node',taskname = None,taskargs = (),taskkwargs = {}):
   assert taskname
   nodenr = len(dag.nodes())
@@ -73,16 +110,16 @@ def daggertask(func):
 @daggertask
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
-  time.sleep(10*random.random())
-  if random.random() < 0.3:
+  time.sleep(2+5*random.random())
+  if random.random() < 0.4:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
 
 @daggertask
-def newtask():
-  log.info('doing some other task')
-  time.sleep(5*random.random())
+def newtask(note):
+  log.info('doing some other task this is our note: {}'.format(note))
+  time.sleep(2+5*random.random())
 
 validrules = {}
 
@@ -91,9 +128,10 @@ def nodes_present(nodenrs,dag):
 
 validrules['nodes_present'] = nodes_present
 
-def schedule_after_these(parentnrs,taskinfo,dag):
+def schedule_after_these(parentnrs,note,dag):
   newnode = mknode(dag,nodename = 'dynamic_node',
-                     taskname = 'newtask'
+                       taskname = 'newtask',
+                       taskkwargs = {'note':note}
                   )
   for parent in parentnrs:
     dag.add_edge(parent,newnode['nodenr'])
@@ -184,12 +222,12 @@ def rule_applicable(dag,ruletoapply):
 
 def main():
 
-  dag = random_dag(5,3)
+  dag = random_dag(4,2)
 
 
   rules = []
-  rules += [ (signature('nodes_present',[1]), signature('schedule_after_these',[1],None)),
-             (signature('nodes_present',[5,1]), signature('schedule_after_these',[5,1],None))
+  rules += [ (signature('nodes_present',[1]), signature('schedule_after_these',[1],note = 'depends on one')),
+             (signature('nodes_present',[4,1]), signature('schedule_after_these',[4,1],note = 'depends on two'))
            ]
 
   print_next_dag(dag)
@@ -226,6 +264,8 @@ def main():
         log.info('rule not ready yet')
         
     time.sleep(1)
+    print_next_dag(dag)
+    
 
   #wait for all results to finish
   for node in dag.nodes():
@@ -237,7 +277,16 @@ def main():
     #check node status one last time
     node_status(dag,node)
 
-  log.info('all running jobs are finished.')
+  log.info('all running jobs are finished. waiting for running jobs..')
+  print_next_dag(dag)
+
+  subprocess.call('echo $(ls *.png|sort)',shell = True)
+
+  subprocess.call('convert -delay 200 $(ls *.png|sort) workflow.gif',shell = True)
+  for f in glob.glob('*.png'):
+    os.remove(f)
+  for f in glob.glob('*.dot'):
+    os.remove(f)
 
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
