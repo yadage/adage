@@ -1,7 +1,7 @@
 from example import prepare, download, rivet, pythia, plotting
 
 import dagger.dag
-from dagger.dag import daggertask,rulefunc,mknode,signature,get_node_by_name,add_edge,result_of
+from dagger.dag import rulefunc,mknode,signature,get_node_by_name,result_of
 
 @rulefunc
 def download_done(dag):
@@ -16,28 +16,19 @@ def schedule_pythia(dag):
 
   lhefiles = result_of(download_node)
 
-  hepmcfiles = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
-  rivet_node = mknode(dag, sig = rivet.s(workdir = 'here', hepmcfiles = hepmcfiles))
+  pythia_nodes = [mknode(dag, sig = pythia.s(lhefilename = lhe), depends_on = [download_node]) for lhe in lhefiles]
 
-  plotting_node = mknode(dag, sig = plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'))
-
-  add_edge(dag,rivet_node,plotting_node)
-
-  for lhe in lhefiles:
-    lhe_node = mknode(dag, sig = pythia.s(lhefilename = lhe))
-    
-    add_edge(dag,download_node,lhe_node)
-    add_edge(dag,lhe_node,rivet_node)
+  hepmcfiles    = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
+  rivet_node    = mknode(dag, sig = rivet.s(workdir = 'here', hepmcfiles = hepmcfiles), depends_on = pythia_nodes)
+  plotting_node = mknode(dag, sig = plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
     
 def build_dag():
   dag = dagger.dag.mk_dag()
-  prepare_node = mknode(dag,sig = prepare.s(workdir = 'here'))
 
-  download_node = mknode(dag,nodename = 'download', sig = download.s(workdir = 'here'))
-  add_edge(dag,prepare_node,download_node)
+  prepare_node  = mknode(dag,sig = prepare.s(workdir = 'here'))
+  download_node = mknode(dag,nodename = 'download', sig = download.s(workdir = 'here'), depends_on = [prepare_node])
 
   rules =  [ (download_done.s(), schedule_pythia.s()) ]
-
   return dag,rules
   
 def main():

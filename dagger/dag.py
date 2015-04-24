@@ -86,7 +86,7 @@ def random_dag(nodes, edges):
     return G
 
 
-def mknode(dag,nodename = 'node', sig = None):
+def mknode(dag,nodename = 'node', sig = None, depends_on = []):
   assert sig
   nodenr = len(dag.nodes())
   dag.add_node(nodenr,
@@ -96,7 +96,10 @@ def mknode(dag,nodename = 'node', sig = None):
     args = sig[1]['args'],
     kwargs = sig[1]['kwargs']
   )
-  return dag.node[nodenr]
+  nodedict = dag.node[nodenr]
+  for parent in depends_on:
+    add_edge(dag,parent,nodedict)
+  return nodedict
   
 
 
