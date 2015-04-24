@@ -62,18 +62,7 @@ def print_dag(dag,name):
     subprocess.call(['dot','-Tpng','-Gsize=9,6\!','-Gdpi=100 ',dotfilename], stdout = pngfile)
     subprocess.call(['convert',pngfilename,'-gravity','NorthEast','-background','white','-extent','900x600',pngfilename])
 
-def mknode(dag,nodename = 'node',taskname = None,taskargs = (),taskkwargs = {}):
-  assert taskname
-  nodenr = len(dag.nodes())
-  dag.add_node(nodenr,
-    nodenr = nodenr,
-    nodename = nodename,
-    taskname = taskname,
-    args = taskargs,
-    kwargs = taskkwargs
-  )
-  return dag.node[nodenr]
-  
+
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
     G = nx.DiGraph()
@@ -96,7 +85,22 @@ def random_dag(nodes, edges):
     return G
 
 
+def mknode(dag,nodename = 'node',taskname = None,taskargs = (),taskkwargs = {}):
+  assert taskname
+  nodenr = len(dag.nodes())
+  dag.add_node(nodenr,
+    nodenr = nodenr,
+    nodename = nodename,
+    taskname = taskname,
+    args = taskargs,
+    kwargs = taskkwargs
+  )
+  return dag.node[nodenr]
+  
+
+
 tasks = {}
+validrules = {}
 
 def daggertask(func):
   qualname = None
@@ -107,11 +111,20 @@ def daggertask(func):
   tasks[qualname] = func
   return func
 
+def rulefunc(func):
+  qualname = None
+  if func.__module__ != '__main__':
+    qualname = '{}.{}'.format(func.__module__,func.__name__)
+  else:
+    qualname = func.__name__
+  validrules[qualname] = func
+  return func
+
 @daggertask
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(2+5*random.random())
-  if random.random() < 0.4:
+  if random.random() < 0.2:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
@@ -121,13 +134,12 @@ def newtask(note):
   log.info('doing some other task this is our note: {}'.format(note))
   time.sleep(2+5*random.random())
 
-validrules = {}
 
+@rulefunc
 def nodes_present(nodenrs,dag):
   return all(n in dag.nodes() for n in nodenrs)
 
-validrules['nodes_present'] = nodes_present
-
+@rulefunc
 def schedule_after_these(parentnrs,note,dag):
   newnode = mknode(dag,nodename = 'dynamic_node',
                        taskname = 'newtask',
@@ -135,9 +147,7 @@ def schedule_after_these(parentnrs,note,dag):
                   )
   for parent in parentnrs:
     dag.add_edge(parent,newnode['nodenr'])
-
-validrules['schedule_after_these'] = schedule_after_these
-
+  
 
 def validate_finished_dag(dag):
   for node in dag:
@@ -222,7 +232,7 @@ def rule_applicable(dag,ruletoapply):
 
 def main():
 
-  dag = random_dag(4,2)
+  dag = random_dag(8,5)
 
 
   rules = []
