@@ -70,10 +70,8 @@ def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
     G = nx.DiGraph()
     for i in range(nodes):
-        mknode(G,nodename = 'demo_node_{}'.format(i),
-                 taskname = 'hello',
-                 taskkwargs = {'workdir':'workdir_{}'.format(i)}
-                 )
+        mknode(G,nodename = 'demo_node_{}'.format(i), sig = hello.s(workdir = 'workdir_{}'.format(i)))
+  
     while edges > 0:
         a = random.randint(0,nodes-1)
         b=a
@@ -88,15 +86,15 @@ def random_dag(nodes, edges):
     return G
 
 
-def mknode(dag,nodename = 'node',taskname = None,taskargs = (),taskkwargs = {}):
-  assert taskname
+def mknode(dag,nodename = 'node', sig = None):
+  assert sig
   nodenr = len(dag.nodes())
   dag.add_node(nodenr,
     nodenr = nodenr,
     nodename = nodename,
-    taskname = taskname,
-    args = taskargs,
-    kwargs = taskkwargs
+    taskname = sig[0],
+    args = sig[1]['args'],
+    kwargs = sig[1]['kwargs']
   )
   return dag.node[nodenr]
   
@@ -105,24 +103,31 @@ def mknode(dag,nodename = 'node',taskname = None,taskargs = (),taskkwargs = {}):
 tasks = {}
 validrules = {}
 
-def daggertask(func):
-  qualname = None
-  if func.__module__ != '__main__':
-    qualname = '{}.{}'.format(func.__module__,func.__name__)
+
+#similar idea as in celery
+def signature(name,*args,**kwargs):
+  return [name,{'args':args,'kwargs':kwargs}]
+
+def qualifiedname(thing):
+  if thing.__module__ != '__main__':
+    return '{}.{}'.format(thing.__module__,thing.__name__)
   else:
-    qualname = func.__name__
-  tasks[qualname] = func
-  func.taskname = qualname
+    return thing.__name__
+
+def daggertask(func):
+  func.taskname = qualifiedname(func)
+  def sig(*args,**kwargs):
+    return signature(func.taskname,*args,**kwargs)
+  func.s = sig
+  tasks[func.taskname] = func
   return func
 
 def rulefunc(func):
-  qualname = None
-  if func.__module__ != '__main__':
-    qualname = '{}.{}'.format(func.__module__,func.__name__)
-  else:
-    qualname = func.__name__
-  validrules[qualname] = func
-  func.rulename = qualname
+  func.rulename = qualifiedname(func)
+  validrules[func.rulename] = func
+  def sig(*args,**kwargs):
+    return signature(func.rulename,*args,**kwargs)
+  func.s = sig
   return func
 
 @daggertask
@@ -146,10 +151,7 @@ def nodes_present(nodenrs,dag):
 
 @rulefunc
 def schedule_after_these(parentnrs,note,dag):
-  newnode = mknode(dag,nodename = 'dynamic_node',
-                       taskname = 'newtask',
-                       taskkwargs = {'note':note}
-                  )
+  newnode = mknode(dag,nodename = 'dynamic_node',sig = newtask.s(note = note))
   for parent in parentnrs:
     dag.add_edge(parent,newnode['nodenr'])
   
@@ -233,10 +235,6 @@ def nodes_left_or_rule(dag,rules):
     log.info('no nodes can be run anymore')
     return False
 
-#similar idea as in celery
-def signature(name,*args,**kwargs):
-  return [name,{'args':args,'kwargs':kwargs}]
-
 def apply_rule(dag,ruletoapply):
   body_name,body_details = ruletoapply[1]
   extended_kwargs = body_details['kwargs'].copy()
@@ -318,8 +316,8 @@ def main():
 
 
   rules = []
-  rules += [ (signature('nodes_present',[1]), signature('schedule_after_these',[1],note = 'depends on one')),
-             (signature('nodes_present',[4,1]), signature('schedule_after_these',[4,1],note = 'depends on two'))
+  rules += [ (nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
+             (nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
            ]
   rundag(dag,rules)
 
