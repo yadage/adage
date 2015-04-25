@@ -1,8 +1,7 @@
-import dagger
-from dagger import daggertask, rulefunc,mknode,signature,get_node_by_name,result_of
+import adage
+from adage import adagetask, rulefunc,mknode,signature,get_node_by_name,result_of
 import networkx as nx
 import random
-import IPython
 import logging
 import time
 log = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ def random_dag(nodes, edges):
             G.remove_edge(a,b)
     return G
 
-@daggertask
+@adagetask
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(2+5*random.random())
@@ -35,7 +34,7 @@ def hello(workdir):
     raise IOError
   log.info("done {}".format(workdir))
 
-@daggertask
+@adagetask
 def newtask(note):
   log.info('doing some other task this is our note: {}'.format(note))
   time.sleep(2+5*random.random())
@@ -60,7 +59,7 @@ def main():
              (nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
            ]
 
-  dagger.rundag(dag,rules,track = True)
+  adage.rundag(dag,rules,track = True)
 
 if __name__=='__main__':
   main()

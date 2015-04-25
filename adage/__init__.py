@@ -94,7 +94,7 @@ def qualifiedname(thing):
   else:
     return thing.__name__
 
-def daggertask(func):
+def adagetask(func):
   func.taskname = qualifiedname(func)
   def sig(*args,**kwargs):
     return signature(func.taskname,*args,**kwargs)
@@ -119,8 +119,8 @@ def validate_finished_dag(dag):
         return False
   return True
     
-def setup():  
-  pool = multiprocessing.Pool(4)
+def setup(poolsize):  
+  pool = multiprocessing.Pool(poolsize)
   def submit(func,args = (),kwargs = {}):
     return pool.apply_async(func,args,kwargs)
   return submit
@@ -213,7 +213,10 @@ def rule_applicable(dag,ruletoapply):
   log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-def rundag(dag,rules, track = False):
+def rundag(dag,rules, track = False, poolsize = 2):
+  log.info('running DAG with {} workers'.format(poolsize))
+  submit = setup(poolsize)
+
   if track:
     if os.path.exists('./track'):
       shutil.rmtree('./track')
@@ -223,7 +226,6 @@ def rundag(dag,rules, track = False):
   for node in nx.topological_sort(dag):
     log.info('{} depends on {}'.format(node,dag.predecessors(node)))
     
-  submit = setup()
 
   #while we have nodes that can be submitted
   while nodes_left_or_rule(dag,rules):

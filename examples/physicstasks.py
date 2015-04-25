@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 import random
-from dagger import daggertask
+from adage import adagetask
 
 import logging
 
@@ -12,14 +12,14 @@ log = logging.getLogger(__name__)
 def chill():
   time.sleep(2+5*random.random())
 
-@daggertask
+@adagetask
 def prepare(workdir):
   if os.path.exists(workdir):
     shutil.rmtree(workdir)
   os.makedirs(workdir)
   chill()
 
-@daggertask
+@adagetask
 def download(workdir):
   #let's say we have 4 files
   filelist = []
@@ -32,7 +32,7 @@ def download(workdir):
   chill()
   return filelist
   
-@daggertask
+@adagetask
 def pythia(lhefilename):
   #let's say we have 10 files
   hepmcfilename = lhefilename.rsplit('.lhe')[0]+'.hepmc'
@@ -49,7 +49,7 @@ def pythia(lhefilename):
   return hepmcfilename
 
 
-@daggertask
+@adagetask
 def mcviz(hepmcfile):
 
   svgfilename = '{}/mcviz.svg'.format(os.path.dirname(hepmcfile))
@@ -61,7 +61,7 @@ def mcviz(hepmcfile):
 
   return svgfilename
 
-@daggertask
+@adagetask
 def rivet(workdir,hepmcfiles):
   log.info('running rivet on these files: {}'.format(hepmcfiles))
   yodafilename = '{}/Rivet.yoda'.format(workdir)
@@ -69,7 +69,7 @@ def rivet(workdir,hepmcfiles):
   chill()
   return yodafilename
 
-@daggertask
+@adagetask
 def plotting(workdir,yodafile):
   #let's say we have 10 files
   

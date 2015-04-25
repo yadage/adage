@@ -1,5 +1,5 @@
-import dagger
-from dagger import rulefunc,mknode,signature,get_node_by_name,result_of
+import adage
+from adage import rulefunc,mknode,signature,get_node_by_name,result_of
 
 #import some task functions that we'd like to run
 from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
@@ -12,7 +12,7 @@ def download_done(dag):
   #we can only run pythia once the donwload is done and we know hoe many LHE files we have
   download_node = get_node_by_name(dag,'download')
   if download_node:
-      return dagger.node_status(dag,download_node['nodenr'])
+      return adage.node_status(dag,download_node['nodenr'])
   return False
   
 @rulefunc
@@ -35,7 +35,7 @@ def schedule_pythia(dag):
   plotting_node = mknode(dag,plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
     
 def build_initial_dag():
-  dag = dagger.mk_dag()
+  dag = adage.mk_dag()
 
   prepare_node  = mknode(dag,prepare.s(workdir = 'here'))
   download_node = mknode(dag,download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
@@ -48,7 +48,7 @@ def build_initial_dag():
   
 def main():
   dag,rules = build_initial_dag()
-  dagger.rundag(dag,rules, track = True)
+  adage.rundag(dag,rules, track = True)
 
 if __name__=='__main__':
   main()
