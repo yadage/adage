@@ -42,8 +42,8 @@ def pythia(lhefilename):
 
   chill()
 
-  if random.random() < 0.1:
-    log.error('ERROR! in workdir {}'.format(workdir))
+  if random.random() < 0.25:
+    log.error('ERROR! in pythia')
     raise IOError
 
   return hepmcfilename

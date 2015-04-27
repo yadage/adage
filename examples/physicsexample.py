@@ -46,9 +46,12 @@ def build_initial_dag():
   rules =  [ (download_done.s(), schedule_pythia.s()) ]
   return dag,rules
   
+
+import celeryapp  
 def main():
   dag,rules = build_initial_dag()
-  adage.rundag(dag,rules, track = True)
+  adage.rundag(dag,rules, track = True, backendsubmit = adage.celerysetup(celeryapp.app))
+  # adage.rundag(dag,rules, track = True)
 
 if __name__=='__main__':
   main()

@@ -1,6 +1,6 @@
 # Adage - A DAG Executor
 
-This is a small experimental package to see how one could describe workflows that are not completely known at definition time.
+This is a small experimental package to see how one could describe workflows that are not completely known at definition time. Tasks should be runnable both in a multiprocessing pool, or using a number of celery workers.
 
 ## Problem
 

@@ -80,10 +80,6 @@ def mknode(dag,sig, nodename = 'node', depends_on = []):
     add_edge(dag,parent,nodedict)
   return nodedict
   
-
-
-
-
 #similar idea as in celery
 def signature(adagetaskname,*args,**kwargs):
   return [adagetaskname,{'args':args,'kwargs':kwargs}]
@@ -94,11 +90,13 @@ def qualifiedname(thing):
   else:
     return thing.__name__
 
+from celery import shared_task
 def adagetask(func):
   func.taskname = qualifiedname(func)
   def sig(*args,**kwargs):
     return signature(func.taskname,*args,**kwargs)
   func.s = sig
+  func.celery = shared_task(func)
   tasks[func.taskname] = func
   return func
 
@@ -119,10 +117,16 @@ def validate_finished_dag(dag):
         return False
   return True
     
-def setup(poolsize):  
+def multiprocsetup(poolsize):  
   pool = multiprocessing.Pool(poolsize)
   def submit(func,args = (),kwargs = {}):
     return pool.apply_async(func,args,kwargs)
+  return submit
+
+def celerysetup(app):
+  app.set_current()
+  def submit(func,args = (),kwargs = {}):
+    return func.celery.apply_async(args,kwargs,throw = False)
   return submit
 
 def node_status(dag,node):
@@ -213,10 +217,7 @@ def rule_applicable(dag,ruletoapply):
   log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-def rundag(dag,rules, track = False, poolsize = 2):
-  log.info('running DAG with {} workers'.format(poolsize))
-  submit = setup(poolsize)
-
+def rundag(dag,rules, track = False, backendsubmit = multiprocsetup(2)):
   if track:
     if os.path.exists('./track'):
       shutil.rmtree('./track')
@@ -247,7 +248,7 @@ def rundag(dag,rules, track = False, poolsize = 2):
         continue;
       if upstream_ok(dag,node):
         log.info('submitting node: {}'.format(node))
-        result = submit(tasks[nodedict['taskname']],nodedict['args'],nodedict['kwargs'])
+        result = backendsubmit(tasks[nodedict['taskname']],nodedict['args'],nodedict['kwargs'])
         nodedict.update(result = result,submitted = time.time())
 
       if upstream_failure(dag,node):
@@ -256,12 +257,14 @@ def rundag(dag,rules, track = False, poolsize = 2):
     time.sleep(1)
     if track: print_next_dag(dag)
     
-
   #wait for all results to finish
   log.info('all running jobs are finished. waiting for running jobs..')
   for node in dag.nodes():
     if 'result' in dag.node[node]:
-      dag.node[node]['result'].wait()
+      try:
+        dag.node[node]['result'].wait()
+      except IOError:
+        print 'some running task failed.. whatever.'
   log.info('all done.')
 
   for node in dag.nodes():
