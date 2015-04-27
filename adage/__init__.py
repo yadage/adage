@@ -85,8 +85,8 @@ def mknode(dag,sig, nodename = 'node', depends_on = []):
 
 
 #similar idea as in celery
-def signature(name,*args,**kwargs):
-  return [name,{'args':args,'kwargs':kwargs}]
+def signature(adagetaskname,*args,**kwargs):
+  return [adagetaskname,{'args':args,'kwargs':kwargs}]
 
 def qualifiedname(thing):
   if thing.__module__ != '__main__':
