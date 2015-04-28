@@ -6,6 +6,9 @@ import logging
 import time
 log = logging.getLogger(__name__)
 
+
+# random DAG code taken from IPython cluster doc
+# http://ipython.org/ipython-doc/dev/parallel/dag_dependencies.html
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
     G = nx.DiGraph()
