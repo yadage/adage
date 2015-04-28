@@ -42,9 +42,9 @@ def pythia(lhefilename):
 
   chill()
 
-  if random.random() < 0.25:
+  if random.random() < 0:
     log.error('ERROR! in pythia')
-    raise IOError
+    raise AssertionError
 
   return hepmcfilename
 

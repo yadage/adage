@@ -6,6 +6,7 @@ import glob
 import logging
 import os
 import shutil
+import sys
 
 logging.basicConfig(format='%(asctime)s %(message)s',level=logging.INFO)
 
@@ -80,7 +81,7 @@ def mknode(dag,sig, nodename = 'node', depends_on = []):
     add_edge(dag,parent,nodedict)
   return nodedict
   
-#similar idea as in celery
+# similar idea as in celery
 def signature(adagetaskname,*args,**kwargs):
   return [adagetaskname,{'args':args,'kwargs':kwargs}]
 
@@ -143,6 +144,12 @@ def node_status(dag,node):
 
 def result_of(nodedict):
   return nodedict['result'].get()
+
+def get_failure_info(nodedict):
+  try:
+    result_of(nodedict)
+  except:
+    log.info("node {} failed with error: {}".format(nodedict,sys.exc_info()))
 
 def node_ran_and_failed(dag,node):
   nodedict = dag.node[node]
@@ -217,7 +224,14 @@ def rule_applicable(dag,ruletoapply):
   log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-def rundag(dag,rules, track = False, backendsubmit = multiprocsetup(2)):
+def rundag(dag,rules, track = False, backendsubmit = None):
+  
+  ## funny behavior of multiprocessing Pools means that
+  ## we can not have backendsubmit = multiprocsetup(2)  in the function sig
+  ## so we only initialize them here
+  if not backendsubmit:
+    backendsubmit = multiprocsetup(2)
+
   if track:
     if os.path.exists('./track'):
       shutil.rmtree('./track')
@@ -257,15 +271,7 @@ def rundag(dag,rules, track = False, backendsubmit = multiprocsetup(2)):
     time.sleep(1)
     if track: print_next_dag(dag)
     
-  #wait for all results to finish
-  log.info('all running jobs are finished. waiting for running jobs..')
-  for node in dag.nodes():
-    if 'result' in dag.node[node]:
-      try:
-        dag.node[node]['result'].wait()
-      except IOError:
-        print 'some running task failed.. whatever.'
-  log.info('all done.')
+  log.info('all running jobs are finished.')
 
   for node in dag.nodes():
     #check node status one last time so we pick up the finishing times
@@ -275,6 +281,22 @@ def rundag(dag,rules, track = False, backendsubmit = multiprocsetup(2)):
     log.error('DAG execution not validating')
     raise RuntimeError
   log.info('execution valid.')
+
+  #collect some stats:
+  successful = 0
+  failed = 0
+  notrun = 0
+  for node in nx.topological_sort(dag):
+    if node_status(dag,node):
+      successful+=1
+    if node_ran_and_failed(dag,node):
+      failed+=1
+      get_failure_info(dag.node[node])
+    if upstream_failure(dag,node):
+      notrun+=1
+
+  log.info('successful: {} | failed: {} | notrun: {} | total: {}'
+           .format(successful,failed,notrun,len(dag.nodes())))
 
   if track:
     print_next_dag(dag)
