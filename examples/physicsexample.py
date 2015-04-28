@@ -32,7 +32,7 @@ def schedule_pythia(dag):
 
   #Rivet and then produce some plots.
   rivet_node    = mknode(dag,rivet.s(workdir = 'here', hepmcfiles = hepmcfiles), depends_on = pythia_nodes)
-  plotting_node = mknode(dag,plotting.s(worksdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
+  plotting_node = mknode(dag,plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
     
 def build_initial_dag():
   dag = adage.mk_dag()
