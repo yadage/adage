@@ -205,7 +205,7 @@ def nodes_left_or_rule(dag,rules):
     return True
 
   if nodes_running_or_waiting:
-    log.info('{} nodes that could be run or are running are left.'.format(len(nodes_running_or_waiting)))
+    log.debug('{} nodes that could be run or are running are left.'.format(len(nodes_running_or_waiting)))
     return True
   else:
     log.info('no nodes can be run anymore')
@@ -238,30 +238,26 @@ def rundag(dag,rules, track = False, backendsubmit = None):
     os.makedirs('./track')
     print_next_dag(dag)
 
-  for node in nx.topological_sort(dag):
-    log.info('{} depends on {}'.format(node,dag.predecessors(node)))
-    
-
   #while we have nodes that can be submitted
   while nodes_left_or_rule(dag,rules):
     #iterate rules in reverse so we can safely pop items
     for i,rule in reversed([x for x in enumerate(rules)]):
       if rule_applicable(dag,rule):
-        log.info('applying a rule!')
+        log.info('extending graph.')
         apply_rule(dag,rule)
         rules.pop(i)
         if track: print_next_dag(dag)
       else:
-        log.info('rule not ready yet')
+        log.debug('rule not ready yet')
     
     for node in nx.topological_sort(dag):
       nodedict = dag.node[node]
       log.debug("working on node: {} with dict {}".format(node,nodedict))
       if 'result' in nodedict:
-        log.debug("node {} already submitted. continue".format(node))
+        log.debug("node already submitted. continue")
         continue;
       if upstream_ok(dag,node):
-        log.info('submitting node: {}'.format(node))
+        log.info('submitting {} job'.format(nodedict ['taskname']))
         result = backendsubmit(tasks[nodedict['taskname']],nodedict['args'],nodedict['kwargs'])
         nodedict.update(result = result,submitted = time.time())
 
@@ -299,6 +295,7 @@ def rundag(dag,rules, track = False, backendsubmit = None):
            .format(successful,failed,notrun,len(dag.nodes())))
 
   if track:
+    log.info('producing visualization...')
     print_next_dag(dag)
     subprocess.call('convert -delay 50 $(ls track/*.png|sort) workflow.gif',shell = True)
     shutil.rmtree('./track')
