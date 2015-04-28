@@ -91,13 +91,16 @@ def qualifiedname(thing):
   else:
     return thing.__name__
 
-from celery import shared_task
 def adagetask(func):
   func.taskname = qualifiedname(func)
   def sig(*args,**kwargs):
     return signature(func.taskname,*args,**kwargs)
   func.s = sig
-  func.celery = shared_task(func)
+  try:
+    from celery import shared_task
+    func.celery = shared_task(func)
+  except ImportError:
+    pass
   tasks[func.taskname] = func
   return func
 
