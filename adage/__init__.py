@@ -8,8 +8,6 @@ import os
 import shutil
 import sys
 
-logging.basicConfig(format='%(asctime)s %(message)s',level=logging.INFO)
-
 log = logging.getLogger(__name__)
 tasks = {}
 validrules = {}
@@ -209,6 +207,7 @@ def nodes_left_or_rule(dag,rules):
 
   if nodes_running_or_waiting:
     log.debug('{} nodes that could be run or are running are left.'.format(len(nodes_running_or_waiting)))
+    log.debug('nodes are: {}'.format([dag.node[n] for n in nodes_running_or_waiting]))
     return True
   else:
     log.info('no nodes can be run anymore')
@@ -227,7 +226,10 @@ def rule_applicable(dag,ruletoapply):
   log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-def rundag(dag,rules, track = False, backendsubmit = None):
+def rundag(dag,rules, track = False, backendsubmit = None, loggername = None):
+  if loggername:
+    global log
+    log = logging.getLogger(loggername)
   
   ## funny behavior of multiprocessing Pools means that
   ## we can not have backendsubmit = multiprocsetup(2)  in the function sig
