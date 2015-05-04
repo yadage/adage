@@ -226,7 +226,6 @@ def rule_applicable(dag,ruletoapply):
   log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-<<<<<<< HEAD
 def rundag(dag,rules, track = False, backendsubmit = None,, loggername = None, workdir = None, trackevery = 1):
   if loggername:
     global log
