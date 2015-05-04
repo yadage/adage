@@ -14,13 +14,13 @@ log = logging.getLogger(__name__)
 tasks = {}
 validrules = {}
 
-def print_next_dag(dag):
+def print_next_dag(dag,trackdir):
   nextnr = 0
-  if glob.glob('track/*.dot'):
-    nextnr = max([int(os.path.basename(s).replace('dag','').replace('.dot','')) for s in  glob.glob('track/*.dot')])+1
+  if glob.glob('{}/*.dot'.format(trackdir)):
+    nextnr = max([int(os.path.basename(s).replace('dag','').replace('.dot','')) for s in  glob.glob('{}/*.dot'.format(trackdir))])+1
   
   padded = '{}'.format(nextnr).zfill(3)
-  print_dag(dag,'dag{}'.format(padded))
+  print_dag(dag,'dag{}'.format(padded),trackdir)
   
 
 def colorize_graph(dag):
@@ -52,9 +52,9 @@ def colorize_graph(dag):
     
   return colorized
 
-def print_dag(dag,name):
-  dotfilename = 'track/{}.dot'.format(name)
-  pngfilename = 'track/{}.png'.format(name) 
+def print_dag(dag,name,trackdir):
+  dotfilename = '{}/{}.dot'.format(trackdir,name)
+  pngfilename = '{}/{}.png'.format(trackdir,name) 
   colorized = colorize_graph(dag)
 
   nx.write_dot(colorized,dotfilename)
@@ -227,7 +227,7 @@ def rule_applicable(dag,ruletoapply):
   log.debug('running predicate {} with args {} and kwargs {}'.format(predicate_name,predicate_details['args'],extended_kwargs))
   return validrules[predicate_name](*predicate_details['args'],**extended_kwargs)
 
-def rundag(dag,rules, track = False, backendsubmit = None):
+def rundag(dag,rules, track = False, backendsubmit = None, workdir = None, trackevery = 1):
   
   ## funny behavior of multiprocessing Pools means that
   ## we can not have backendsubmit = multiprocsetup(2)  in the function sig
@@ -235,21 +235,28 @@ def rundag(dag,rules, track = False, backendsubmit = None):
   if not backendsubmit:
     backendsubmit = multiprocsetup(2)
 
+  if not workdir:
+    workdir = os.getcwd()
+
+  trackdir = '{}/track'.format(workdir)
+
   if track:
-    if os.path.exists('./track'):
-      shutil.rmtree('./track')
-    os.makedirs('./track')
-    print_next_dag(dag)
+    if os.path.exists(trackdir):
+      shutil.rmtree(trackdir)
+    os.makedirs(trackdir)
+    print_next_dag(dag,trackdir)
 
   #while we have nodes that can be submitted
+  trackcounter = 0
   while nodes_left_or_rule(dag,rules):
+    
     #iterate rules in reverse so we can safely pop items
     for i,rule in reversed([x for x in enumerate(rules)]):
       if rule_applicable(dag,rule):
         log.info('extending graph.')
         apply_rule(dag,rule)
         rules.pop(i)
-        if track: print_next_dag(dag)
+        if track: print_next_dag(dag,trackdir)
       else:
         log.debug('rule not ready yet')
     
@@ -266,9 +273,12 @@ def rundag(dag,rules, track = False, backendsubmit = None):
 
       if upstream_failure(dag,node):
         log.warning('not submitting node: {} due to upstream failure'.format(node))
-              
+
     time.sleep(1)
-    if track: print_next_dag(dag)
+    trackcounter+=1
+    if track and trackcounter == trackevery:
+      trackcounter=0
+      print_next_dag(dag,trackdir)
     
   log.info('all running jobs are finished.')
 
@@ -299,7 +309,7 @@ def rundag(dag,rules, track = False, backendsubmit = None):
 
   if track:
     log.info('producing visualization...')
-    print_next_dag(dag)
-    subprocess.call('convert -delay 50 $(ls track/*.png|sort) workflow.gif',shell = True)
-    shutil.rmtree('./track')
+    print_next_dag(dag,trackdir)
+    subprocess.call('convert -delay 50 $(ls {}/*.png|sort) {}/workflow.gif'.format(trackdir,workdir),shell = True)
+    shutil.rmtree(trackdir)
 

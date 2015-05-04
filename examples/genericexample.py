@@ -62,7 +62,7 @@ def main():
              (nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
            ]
 
-  adage.rundag(dag,rules,track = True)
+  adage.rundag(dag,rules,track = True, workdir = 'workdirtrack', trackevery = 4)
 
 if __name__=='__main__':
   main()
