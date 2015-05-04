@@ -23,7 +23,7 @@ def print_next_dag(dag,trackdir):
 
 def colorize_graph(dag):
   colorized = nx.DiGraph()
-  for node in nx.topological_sort(dag):
+  for node in dag.nodes():
 
     nodedict = dag.node[node].copy()
     nodedict.pop('result',None)
