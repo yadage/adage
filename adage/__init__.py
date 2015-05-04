@@ -45,7 +45,8 @@ def colorize_graph(dag):
 
   for node in colorized.nodes():
     nodedict = colorized.node[node]
-    label = '{}: {}/{}/{}'.format(nodedict['nodenr'],nodedict['taskname'],nodedict['args'],nodedict['kwargs'])
+    #label = '{}: {}/{}/{}'.format(nodedict['nodenr'],nodedict['taskname'],nodedict['args'],nodedict['kwargs'])
+    label = nodedict['taskname']
     nodedict.update(style='filled',color = nodedict['result'],label = label)
     
   return colorized
