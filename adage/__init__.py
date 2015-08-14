@@ -292,7 +292,7 @@ def rundag(dag,rules, track = False, backendsubmit = None, loggername = None, wo
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
     raise RuntimeError
-  log.info('execution valid.')
+  log.info('execution valid. (in terms of execution order)')
 
   #collect some stats:
   successful = 0
@@ -316,3 +316,6 @@ def rundag(dag,rules, track = False, backendsubmit = None, loggername = None, wo
     subprocess.call('convert -delay 50 $(ls {}/*.png|sort) {}/workflow.gif'.format(trackdir,workdir),shell = True)
     shutil.rmtree(trackdir)
 
+  if failed:
+    log.error('raising RunTimeError due to failed jobs')
+    raise RuntimeError 
