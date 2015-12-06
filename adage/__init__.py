@@ -179,7 +179,7 @@ def upstream_failure(dag,node):
     return False
 
   upstream_status = [node_ran_and_failed(dag,x) or upstream_failure(dag,x) for x in upstream]
-  log.debug('upstream status: {}'.format(upstream_status))
+  log.debug('upstream failed: {}'.format(upstream_status))
   return any(upstream_status)
 
 def get_node_by_name(dag,nodename):

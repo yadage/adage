@@ -55,7 +55,7 @@ def schedule_after_these(parentnrs,note,dag):
 
 def main():
   dag = random_dag(6,5)
-  logging.basicConfig()
+  logging.basicConfig(level = logging.DEBUG)
 
   rules = []
   rules += [ (nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
