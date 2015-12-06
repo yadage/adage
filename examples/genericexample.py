@@ -32,7 +32,7 @@ def random_dag(nodes, edges):
 def hello(workdir):
   log.info("running job in workdir {}".format(workdir))
   time.sleep(2+5*random.random())
-  if random.random() < 0.3:
+  if random.random() < 0.001:
     log.error('ERROR! in workdir {}'.format(workdir))
     raise IOError
   log.info("done {}".format(workdir))
@@ -55,7 +55,7 @@ def schedule_after_these(parentnrs,note,dag):
 
 def main():
   dag = random_dag(6,5)
-
+  logging.basicConfig()
 
   rules = []
   rules += [ (nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
