@@ -41,17 +41,17 @@ def schedule_pdf(fixednodes, varnodes,dag):
   for node in varnodes:
     npdf = node.result_of()
     allpdfjobs += [mknode(dag,
-                          sig = pdfproducer.s(name = 'fromvar_{}_{}'.format(node.name,i)),
+                          task = pdfproducer.s(name = 'fromvar_{}_{}'.format(node.name,i)),
                           depends_on = [node]) for i in range(npdf)]
   
-  mknode(dag,sig = mergepdf.s(),depends_on = allpdfjobs)
+  mknode(dag,task = mergepdf.s(),depends_on = allpdfjobs)
   
 def main():
   dag = adage.mk_dag()
   
-  fix0 = mknode(dag,sig = pdfproducer.s(name = 'fixed'))
-  var1 = mknode(dag,nodename = 'variable1', sig = variableoutput.s())
-  var2 = mknode(dag,nodename = 'variable2', sig = variableoutput.s())
+  fix0 = mknode(dag,task = pdfproducer.s(name = 'fixed'))
+  var1 = mknode(dag,nodename = 'variable1', task = variableoutput.s())
+  var2 = mknode(dag,nodename = 'variable2', task = variableoutput.s())
 
   varnodes = [var1,var2]
 

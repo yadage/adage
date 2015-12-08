@@ -3,11 +3,11 @@ import time
 import networkx as nx
 import subprocess
 import glob
+import adage.trackers
 import logging
 import os
 import shutil
 import sys
-import visualize as viz
 import dagstate
 
 from decorators import adagetask,functorize,Rule, qualifiedname
@@ -46,6 +46,37 @@ def nodes_left_or_rule(dag,rules):
     log.info('no nodes can be run anymore')
     return False
 
+def update_dag(dag,rules):
+  #iterate rules in reverse so we can safely pop items
+  for i,rule in reversed([x for x in enumerate(rules)]):
+    if rule.applicable(dag):
+      log.info('extending graph.')
+      rule.apply(dag)
+      rules.pop(i)
+    else:
+      log.debug('rule not ready yet')
+
+def process_dag(dag,rules,backend):
+  for node in nx.topological_sort(dag):
+    nodeobj = dag.getNode(node)
+
+    if not nodeobj.backend:
+      nodeobj.backend = backend
+
+    log.debug("working on node: {} with obj {}".format(node,nodeobj))
+
+    if nodeobj.submitted:
+      log.debug("node already submitted. continue")
+      continue;
+    if dagstate.upstream_ok(dag,nodeobj):
+      log.info('submitting {} job'.format(nodeobj))
+      nodeobj.result = backend.submit(nodeobj.task)
+      submit_time = time.time()
+      nodeobj.submitted = submit_time
+
+    if dagstate.upstream_failure(dag,nodeobj):
+      log.warning('not submitting node: {} due to upstream failure'.format(node))
+  
 def rundag(dag,rules, track = False, backend = None, loggername = None, workdir = None, trackevery = 1):
   if loggername:
     global log
@@ -61,88 +92,33 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
   if not workdir:
     workdir = os.getcwd()
 
-  trackdir = '{}/track'.format(workdir)
 
+  trackerlist = [trackers.SimpleReportTracker(log)]
+  
   if track:
-    if os.path.exists(trackdir):
-      shutil.rmtree(trackdir)
-    os.makedirs(trackdir)
-    viz.print_next_dag(dag,trackdir)
-
+    trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir), mindelta = trackevery)]
+    
+  for t in trackerlist: t.initialize(dag)
   #while we have nodes that can be submitted
-  trackcounter = 0
   while nodes_left_or_rule(dag,rules):
-    
-    #iterate rules in reverse so we can safely pop items
-    for i,rule in reversed([x for x in enumerate(rules)]):
-      if rule.applicable(dag):
-        log.info('extending graph.')
-        rule.apply(dag)
-        rules.pop(i)
-        if track: viz.print_next_dag(dag,trackdir)
-      else:
-        log.debug('rule not ready yet')
-    
-    for node in nx.topological_sort(dag):
-      nodeobj = dag.getNode(node)
-
-      if not nodeobj.backend:
-        nodeobj.backend = backend
-
-      log.debug("working on node: {} with obj {}".format(node,nodeobj))
-
-      if nodeobj.submitted:
-        log.debug("node already submitted. continue")
-        continue;
-      if dagstate.upstream_ok(dag,nodeobj):
-        log.info('submitting {} job'.format(nodeobj))
-        nodeobj.result = backend.submit(nodeobj.signature)
-        submit_time = time.time()
-        nodeobj.submitted = submit_time
-
-      if dagstate.upstream_failure(dag,nodeobj):
-        log.warning('not submitting node: {} due to upstream failure'.format(node))
-
+    update_dag(dag,rules)
+    process_dag(dag,rules,backend)
+    for t in trackerlist: t.track(dag)
     time.sleep(1)
-    trackcounter+=1
-    if track and trackcounter == trackevery:
-      trackcounter=0
-      viz.print_next_dag(dag,trackdir)
     
   log.info('all running jobs are finished.')
-
+  
   for node in dag.nodes():
     #check node status one last time so we pick up the finishing times
     dagstate.node_status(dag.getNode(node))
+
+  for t in trackerlist: t.finalize(dag)
 
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
     raise RuntimeError
   log.info('execution valid. (in terms of execution order)')
 
-  #collect some stats:
-  successful = 0
-  failed = 0
-  notrun = 0
-  for node in nx.topological_sort(dag):
-    nodeobj = dag.getNode(node)
-    if dagstate.node_status(nodeobj):
-      successful+=1
-    if dagstate.node_ran_and_failed(nodeobj):
-      failed+=1
-      log.info("node: {} failed. reason: {}".format(nodeobj,backend.fail_info(nodeobj.result)))
-    if dagstate.upstream_failure(dag,nodeobj):
-      notrun+=1
-
-  log.info('successful: {} | failed: {} | notrun: {} | total: {}'
-           .format(successful,failed,notrun,len(dag.nodes())))
-
-  if track:
-    log.info('producing visualization...')
-    viz.print_next_dag(dag,trackdir)
-    subprocess.call('convert -delay 50 $(ls {}/*.png|sort) {}/workflow.gif'.format(trackdir,workdir),shell = True)
-    shutil.rmtree(trackdir)
-
-  if failed:
+  if any(dag.getNode(x).state() == nodestate.FAILED for x in dag.nodes()):
     log.error('raising RunTimeError due to failed jobs')
     raise RuntimeError 

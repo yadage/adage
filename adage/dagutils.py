@@ -6,8 +6,8 @@ import adage.graph
 def add_edge(dag,from_node,to_node):
   dag.addEdge(from_node,to_node)
 
-def mknode(dag,sig, nodename = 'node', depends_on = []):
-  nodeobj = Node(str(uuid.uuid1()),nodename,sig)
+def mknode(dag,task, nodename = 'node', depends_on = []):
+  nodeobj = Node(str(uuid.uuid1()),nodename,task)
 
   dag.addNode(nodeobj)
   for parent in depends_on:

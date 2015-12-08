@@ -2,14 +2,14 @@ import nodestate
 import time
 
 class Node(object):
-  def __init__(self,identifier,name,sig):
+  def __init__(self,identifier,name,task):
     self.identifier = identifier
     self.name = name
     self.submit_time = None
     self.ready_by_time = None
     self.the_state = nodestate.DEFINED
     
-    self.signature = sig
+    self.task = task
     self.the_result = None
     self.the_backend = None
 

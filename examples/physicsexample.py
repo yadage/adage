@@ -50,7 +50,7 @@ def build_initial_dag():
 
 def main():
   dag,rules = build_initial_dag()
-  adage.rundag(dag,rules, track = True)
+  adage.rundag(dag,rules, track = True, trackevery = 5)
 
 if __name__=='__main__':
   main()

@@ -53,7 +53,7 @@ def schedule_after_these(parentnrs,note,dag):
   names = ['demo_node_{}'.format(i) for i in parentnrs]
   nodes = [dag.getNodeByName(name) for name in names]
 
-  newnode = mknode(dag,nodename = 'dynamic_node',sig = newtask.s(note = note))
+  newnode = mknode(dag,nodename = 'dynamic_node',task = newtask.s(note = note))
   for parentnode in nodes:
     adage.dagutils.add_edge(dag,parentnode,newnode)
 
@@ -63,7 +63,7 @@ def main():
   adage_dag = mk_dag()
   numbered = {}
   for i,node in enumerate(dag.nodes()):
-    numbered[node] = mknode(adage_dag,nodename = 'demo_node_{}'.format(node), sig = hello.s(workdir = 'workdir_{}'.format(node)))
+    numbered[node] = mknode(adage_dag,nodename = 'demo_node_{}'.format(node), task = hello.s(workdir = 'workdir_{}'.format(node)))
   for i,node in enumerate(dag.nodes()):
     print 'pre for: {} are: {}'.format(node,dag.predecessors(node))
     for parent in dag.predecessors(node):
