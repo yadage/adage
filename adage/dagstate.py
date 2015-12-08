@@ -1,7 +1,6 @@
 import logging
 import time
 import nodestate
-from dagutils import get_nodeobj
 
 log = logging.getLogger(__name__)
 
@@ -13,10 +12,10 @@ def upstream_ok(dag,nodeobj):
   log.debug("upstream nodes are {}".format(dag.predecessors(nodeobj.identifier)))
   if not upstream:
     return True
-  return all(node_status(get_nodeobj(dag,x)) for x in upstream)
+  return all(node_status(dag.getNode(x)) for x in upstream)
 
 def upstream_failure(dag,nodeobj):
-  upstream = [get_nodeobj(dag,x) for x in dag.predecessors(nodeobj.identifier)]
+  upstream = [dag.getNode(x) for x in dag.predecessors(nodeobj.identifier)]
   if not upstream:
     return False
 

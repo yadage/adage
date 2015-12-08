@@ -52,7 +52,7 @@ class DelayedCallable(object):
     self.kwargs = None
     
   def __repr__(self):
-    return '<Delayed: {}>'.format(self.qualname)
+    return '<Delayed: {}>'.format(self.func)
     
   def __call__(self):
     assert self.kwargs is not None

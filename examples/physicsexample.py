@@ -1,5 +1,5 @@
 import adage
-from adage import functorize,Rule,mknode,get_node_by_name
+from adage import functorize,Rule,mknode
 import adage.dagstate
 
 #import some task functions that we'd like to run
@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 @functorize
 def download_done(dag):
   #we can only run pythia once the donwload is done and we know hoe many LHE files we have
-  download_node = get_node_by_name(dag,'download')
+  download_node = dag.getNodeByName('download')
   if download_node:
       return adage.dagstate.node_status(download_node)
   return False
@@ -19,7 +19,7 @@ def download_done(dag):
 @functorize
 def schedule_pythia(dag):
   
-  download_node = get_node_by_name(dag,'download')
+  download_node = dag.getNodeByName('download')
   lhefiles = download_node.result_of()
 
   #let's run pythia on these LHE files

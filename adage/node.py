@@ -4,12 +4,12 @@ import time
 class Node(object):
   def __init__(self,identifier,name,sig):
     self.identifier = identifier
-    self.the_state = nodestate.DEFINED
-    self.signature = sig
     self.name = name
-    self.qualname = sig.qualname
     self.submit_time = None
     self.ready_by_time = None
+    self.the_state = nodestate.DEFINED
+    
+    self.signature = sig
     self.the_result = None
     self.the_backend = None
 

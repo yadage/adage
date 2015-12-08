@@ -5,7 +5,6 @@ import subprocess
 import os
 import nodestate
 import math
-from dagutils import get_nodeobj
 def print_next_dag(dag,trackdir):
   nextnr = 0
   if glob.glob('{}/*.dot'.format(trackdir)):
@@ -17,7 +16,7 @@ def print_next_dag(dag,trackdir):
 def colorize_graph(dag):
   colorized = nx.DiGraph()
   for node in dag.nodes():
-    nodeobj = get_nodeobj(dag,node)
+    nodeobj = dag.getNode(node)
 
     color_dict = {
       nodestate.DEFINED: 'grey',

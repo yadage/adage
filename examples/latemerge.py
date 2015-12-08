@@ -1,7 +1,7 @@
 import adage
 import adage.dagstate
 import adage.dagutils
-from adage import adagetask, functorize, Rule,mknode,get_node_by_name, mk_dag
+from adage import adagetask, functorize, Rule,mknode, mk_dag
 
 import networkx as nx
 import random

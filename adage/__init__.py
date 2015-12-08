@@ -17,9 +17,9 @@ log = logging.getLogger(__name__)
 
 def validate_finished_dag(dag):
   for node in dag:
-    nodeobj = get_nodeobj(dag,node)
+    nodeobj = dag.getNode(node)
     if nodeobj.submitted:
-      sanity = all([nodeobj.submitted > get_nodeobj(dag,x).ready_by_time for x in dag.predecessors(node)])
+      sanity = all([nodeobj.submitted > dag.getNode(x).ready_by_time for x in dag.predecessors(node)])
       if not sanity:
         return False
   return True
@@ -30,14 +30,9 @@ def get_failure_info(backend,nodeobj):
   except:
     log.info("node {} failed with error: {}".format(nodeobj,sys.exc_info()))
 
-def get_node_by_name(dag,nodename):
-  matching = [x for x in dag.nodes() if dag.node[x]['nodeobj'].name == nodename]
-  return get_nodeobj(dag,matching[0]) if (len(matching) == 1) else None
-  
-  
 def nodes_left_or_rule(dag,rules):
-  nodes_we_could_run = [node for node in dag.nodes() if not dagstate.upstream_failure(dag,get_nodeobj(dag,node))]
-  nodes_running_or_defined = [x for x in nodes_we_could_run if dagstate.node_defined_or_waiting(get_nodeobj(dag,x))]
+  nodes_we_could_run = [node for node in dag.nodes() if not dagstate.upstream_failure(dag,dag.getNode(node))]
+  nodes_running_or_defined = [x for x in nodes_we_could_run if dagstate.node_defined_or_waiting(dag.getNode(x))]
 
   if any(rule.applicable(dag) for rule in rules):
     return True
@@ -50,13 +45,6 @@ def nodes_left_or_rule(dag,rules):
   else:
     log.info('no nodes can be run anymore')
     return False
-
-def apply_rule(dag,ruletoapply):
-  return ruletoapply[1](dag)
-
-def rule_applicable(dag,ruletoapply):
-  return ruletoapply[0](dag)
-
 
 def rundag(dag,rules, track = False, backend = None, loggername = None, workdir = None, trackevery = 1):
   if loggername:
@@ -96,7 +84,7 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
         log.debug('rule not ready yet')
     
     for node in nx.topological_sort(dag):
-      nodeobj = get_nodeobj(dag,node)
+      nodeobj = dag.getNode(node)
 
       if not nodeobj.backend:
         nodeobj.backend = backend
@@ -125,7 +113,7 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
 
   for node in dag.nodes():
     #check node status one last time so we pick up the finishing times
-    dagstate.node_status(get_nodeobj(dag,node))
+    dagstate.node_status(dag.getNode(node))
 
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
@@ -137,7 +125,7 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
   failed = 0
   notrun = 0
   for node in nx.topological_sort(dag):
-    nodeobj = get_nodeobj(dag,node)
+    nodeobj = dag.getNode(node)
     if dagstate.node_status(nodeobj):
       successful+=1
     if dagstate.node_ran_and_failed(nodeobj):
