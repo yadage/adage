@@ -1,5 +1,5 @@
 import adage
-from adage import adagetask, rulefunc,mknode,signature,get_node_by_name,result_of
+from adage import adagetask, rulefunc,mknode
 import networkx as nx
 import random
 import logging
@@ -12,20 +12,22 @@ log = logging.getLogger(__name__)
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
     G = nx.DiGraph()
+    
+    nodecache = {}
     for i in range(nodes):
-        mknode(G,nodename = 'demo_node_{}'.format(i), sig = hello.s(workdir = 'workdir_{}'.format(i)))
+        nodecache[i] = mknode(G,nodename = 'demo_node_{}'.format(i), sig = hello.s(workdir = 'workdir_{}'.format(i)))
   
     while edges > 0:
         a = random.randint(0,nodes-1)
         b=a
         while b==a:
             b = random.randint(0,nodes-1)
-        G.add_edge(a,b)
+        G.add_edge(nodecache[a].identifier,nodecache[b].identifier)
         if nx.is_directed_acyclic_graph(G):
             edges -= 1
         else:
             # we closed a loop!
-            G.remove_edge(a,b)
+            G.remove_edge(nodecache[a].identifier,nodecache[b].identifier)
     return G
 
 @adagetask
@@ -55,6 +57,7 @@ def schedule_after_these(parentnrs,note,dag):
 
 def main():
   dag = random_dag(6,5)
+
   logging.basicConfig(level = logging.DEBUG)
 
   rules = []

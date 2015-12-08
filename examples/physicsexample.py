@@ -1,5 +1,6 @@
 import adage
-from adage import rulefunc,mknode,signature,get_node_by_name,result_of
+from adage import rulefunc,mknode,get_node_by_name
+import adage.dagstate
 
 #import some task functions that we'd like to run
 from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
@@ -12,14 +13,14 @@ def download_done(dag):
   #we can only run pythia once the donwload is done and we know hoe many LHE files we have
   download_node = get_node_by_name(dag,'download')
   if download_node:
-      return adage.node_status(dag,download_node['nodenr'])
+      return adage.dagstate.node_status(download_node)
   return False
   
 @rulefunc
 def schedule_pythia(dag):
   
   download_node = get_node_by_name(dag,'download')
-  lhefiles = result_of(download_node)
+  lhefiles = download_node.result_of()
 
   #let's run pythia on these LHE files
   pythia_nodes = [mknode(dag,pythia.s(lhefilename = lhe), depends_on = [download_node]) for lhe in lhefiles]
@@ -47,11 +48,9 @@ def build_initial_dag():
   return dag,rules
   
 
-import celeryapp  
 def main():
   dag,rules = build_initial_dag()
-  adage.rundag(dag,rules, track = True, backendsubmit = adage.celerysetup(celeryapp.app))
-  # adage.rundag(dag,rules, track = True)
+  adage.rundag(dag,rules, track = True)
 
 if __name__=='__main__':
   main()
