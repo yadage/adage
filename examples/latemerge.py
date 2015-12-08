@@ -1,7 +1,7 @@
 import adage
 import adage.dagstate
 import adage.dagutils
-from adage import adagetask, rulefunc,mknode,get_node_by_name, mk_dag
+from adage import adagetask, functorize, Rule,mknode,get_node_by_name, mk_dag
 
 import networkx as nx
 import random
@@ -29,12 +29,12 @@ def mergepdf():
   open('merged.pdf','a').close()
   
 
-@rulefunc
+@functorize
 def variable_nodes_done(varnodes,dag):
   #ready if we have a finished variable node that has no ancestors
   return all([adage.dagstate.node_status(n) for n in varnodes])
 
-@rulefunc
+@functorize
 def schedule_pdf(fixednodes, varnodes,dag):
   log.info('scheduling pdf')
   allpdfjobs = fixednodes
@@ -57,7 +57,7 @@ def main():
 
   rules = []
   rules += [
-    (variable_nodes_done.s(varnodes),schedule_pdf.s([fix0],varnodes))
+    Rule(variable_nodes_done.s(varnodes),schedule_pdf.s([fix0],varnodes))
   ]
 
   adage.rundag(dag,rules,track = True, workdir = 'bla')

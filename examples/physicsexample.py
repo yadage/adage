@@ -1,5 +1,5 @@
 import adage
-from adage import rulefunc,mknode,get_node_by_name
+from adage import functorize,Rule,mknode,get_node_by_name
 import adage.dagstate
 
 #import some task functions that we'd like to run
@@ -8,7 +8,7 @@ from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
 import logging
 logging.basicConfig(level=logging.INFO)
 
-@rulefunc
+@functorize
 def download_done(dag):
   #we can only run pythia once the donwload is done and we know hoe many LHE files we have
   download_node = get_node_by_name(dag,'download')
@@ -16,7 +16,7 @@ def download_done(dag):
       return adage.dagstate.node_status(download_node)
   return False
   
-@rulefunc
+@functorize
 def schedule_pythia(dag):
   
   download_node = get_node_by_name(dag,'download')
@@ -44,7 +44,7 @@ def build_initial_dag():
   #possible syntax that could be nice using partial function execution
   #  download_node = do(download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
 
-  rules =  [ (download_done.s(), schedule_pythia.s()) ]
+  rules =  [ Rule(download_done.s(), schedule_pythia.s()) ]
   return dag,rules
   
 

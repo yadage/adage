@@ -10,7 +10,7 @@ import sys
 import visualize as viz
 import dagstate
 
-from decorators import adagetask, rulefunc, qualifiedname
+from decorators import adagetask,functorize,Rule, qualifiedname
 from dagutils import *
 
 log = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ def nodes_left_or_rule(dag,rules):
   nodes_we_could_run = [node for node in dag.nodes() if not dagstate.upstream_failure(dag,get_nodeobj(dag,node))]
   nodes_running_or_defined = [x for x in nodes_we_could_run if dagstate.node_defined_or_waiting(get_nodeobj(dag,x))]
 
-  if any(rule_applicable(dag,rule) for rule in rules):
+  if any(rule.applicable(dag) for rule in rules):
     return True
 
   log.debug('nodes we could run: {}'.format(nodes_we_could_run))
@@ -87,9 +87,9 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
     
     #iterate rules in reverse so we can safely pop items
     for i,rule in reversed([x for x in enumerate(rules)]):
-      if rule_applicable(dag,rule):
+      if rule.applicable(dag):
         log.info('extending graph.')
-        apply_rule(dag,rule)
+        rule.apply(dag)
         rules.pop(i)
         if track: viz.print_next_dag(dag,trackdir)
       else:

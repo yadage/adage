@@ -1,5 +1,6 @@
 import adage
-from adage import adagetask, rulefunc,mknode
+import adage.dagutils
+from adage import adagetask, functorize, Rule,mknode
 import networkx as nx
 import random
 import logging
@@ -45,15 +46,19 @@ def newtask(note):
   time.sleep(2+5*random.random())
 
 
-@rulefunc
+@functorize
 def nodes_present(nodenrs,dag):
-  return all(n in dag.nodes() for n in nodenrs)
+  names = ['demo_node_{}'.format(i) for i in nodenrs]
+  return all(adage.get_node_by_name(dag,name) for name in names)
 
-@rulefunc
+@functorize
 def schedule_after_these(parentnrs,note,dag):
+  names = ['demo_node_{}'.format(i) for i in parentnrs]
+  nodes = [adage.get_node_by_name(dag,name) for name in names]
+
   newnode = mknode(dag,nodename = 'dynamic_node',sig = newtask.s(note = note))
-  for parent in parentnrs:
-    dag.add_edge(parent,newnode['nodenr'])
+  for parentnode in nodes:
+    adage.dagutils.add_edge(dag,parentnode,newnode)
 
 def main():
   dag = random_dag(6,5)
@@ -61,8 +66,8 @@ def main():
   logging.basicConfig(level = logging.DEBUG)
 
   rules = []
-  rules += [ (nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
-             (nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
+  rules += [ Rule(nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
+             Rule(nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
            ]
 
   adage.rundag(dag,rules,track = True, workdir = 'workdirtrack', trackevery = 4)
