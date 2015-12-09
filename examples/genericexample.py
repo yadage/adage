@@ -1,5 +1,4 @@
 import adage
-import adage.dagutils
 from adage import adagetask, functorize, Rule,mknode, mk_dag
 import networkx as nx
 import random
@@ -55,7 +54,7 @@ def schedule_after_these(parentnrs,note,dag):
 
   newnode = mknode(dag,nodename = 'dynamic_node',task = newtask.s(note = note))
   for parentnode in nodes:
-    adage.dagutils.add_edge(dag,parentnode,newnode)
+    dag.addEdge(parentnode,newnode)
 
 def main():
   dag = random_dag(6,5)

@@ -47,7 +47,7 @@ class SimpleReportTracker(object):
         successful+=1
       if dagstate.node_ran_and_failed(nodeobj):
         failed+=1
-        self.log.info("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.result)))
+        self.log.error("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.result)))
       if dagstate.upstream_failure(dag,nodeobj):
         notrun+=1
     self.log.info('successful: {} | failed: {} | notrun: {} | total: {}'.format(successful,failed,notrun,len(dag.nodes())))

@@ -111,14 +111,14 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
   for node in dag.nodes():
     #check node status one last time so we pick up the finishing times
     dagstate.node_status(dag.getNode(node))
-
+    
   for t in trackerlist: t.finalize(dag)
 
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
     raise RuntimeError
   log.info('execution valid. (in terms of execution order)')
-
+  
   if any(dag.getNode(x).state() == nodestate.FAILED for x in dag.nodes()):
     log.error('raising RunTimeError due to failed jobs')
     raise RuntimeError 
