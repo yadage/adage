@@ -29,7 +29,9 @@ def predicate(dag):
   
 @functorize
 def rulebody(dag):
-  mknode(dag,mytask.s(2), depends_on = [dag.getNode(dag.nodes()[0])])
+  depnode = dag.getNode(dag.nodes()[0])
+  for i in range(6):
+    mknode(dag,mytask.s(i), depends_on = [depnode])
 
   
 app = Celery('simple', broker = 'redis://', backend = 'redis://')
