@@ -1,5 +1,6 @@
 import adage
-from adage import rulefunc,mknode,signature,get_node_by_name,result_of
+from adage import functorize,Rule,mknode
+import adage.dagstate
 
 #import some task functions that we'd like to run
 from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
@@ -7,19 +8,19 @@ from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
 import logging
 logging.basicConfig(level=logging.INFO)
 
-@rulefunc
+@functorize
 def download_done(dag):
   #we can only run pythia once the donwload is done and we know hoe many LHE files we have
-  download_node = get_node_by_name(dag,'download')
+  download_node = dag.getNodeByName('download')
   if download_node:
-      return adage.node_status(dag,download_node['nodenr'])
+      return adage.dagstate.node_status(download_node)
   return False
   
-@rulefunc
+@functorize
 def schedule_pythia(dag):
   
-  download_node = get_node_by_name(dag,'download')
-  lhefiles = result_of(download_node)
+  download_node = dag.getNodeByName('download')
+  lhefiles = download_node.result_of()
 
   #let's run pythia on these LHE files
   pythia_nodes = [mknode(dag,pythia.s(lhefilename = lhe), depends_on = [download_node]) for lhe in lhefiles]
@@ -43,15 +44,13 @@ def build_initial_dag():
   #possible syntax that could be nice using partial function execution
   #  download_node = do(download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
 
-  rules =  [ (download_done.s(), schedule_pythia.s()) ]
+  rules =  [ Rule(download_done.s(), schedule_pythia.s()) ]
   return dag,rules
   
 
-import celeryapp  
 def main():
   dag,rules = build_initial_dag()
-  adage.rundag(dag,rules, track = True, backendsubmit = adage.celerysetup(celeryapp.app))
-  # adage.rundag(dag,rules, track = True)
+  adage.rundag(dag,rules, track = True, trackevery = 5)
 
 if __name__=='__main__':
   main()

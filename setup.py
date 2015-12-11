@@ -4,7 +4,7 @@ setup(
   name = 'adage',
   author = 'Lukas Heinrich',
   author_email = 'lukas.heinrich@gmail.com',
-  version = '0.1.7.1',
+  version = '0.2.0',
   description = 'running dynamic DAG workflows',
   packages = find_packages(),
   install_requires = [

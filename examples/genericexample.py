@@ -1,5 +1,5 @@
 import adage
-from adage import adagetask, rulefunc,mknode,signature,get_node_by_name,result_of
+from adage import adagetask, functorize, Rule,mknode, mk_dag
 import networkx as nx
 import random
 import logging
@@ -13,8 +13,7 @@ def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
     G = nx.DiGraph()
     for i in range(nodes):
-        mknode(G,nodename = 'demo_node_{}'.format(i), sig = hello.s(workdir = 'workdir_{}'.format(i)))
-  
+        G.add_node(i)
     while edges > 0:
         a = random.randint(0,nodes-1)
         b=a
@@ -43,26 +42,41 @@ def newtask(note):
   time.sleep(2+5*random.random())
 
 
-@rulefunc
+@functorize
 def nodes_present(nodenrs,dag):
-  return all(n in dag.nodes() for n in nodenrs)
+  names = ['demo_node_{}'.format(i) for i in nodenrs]
+  return all(dag.getNodeByName(name) for name in names)
 
-@rulefunc
+@functorize
 def schedule_after_these(parentnrs,note,dag):
-  newnode = mknode(dag,nodename = 'dynamic_node',sig = newtask.s(note = note))
-  for parent in parentnrs:
-    dag.add_edge(parent,newnode['nodenr'])
+  names = ['demo_node_{}'.format(i) for i in parentnrs]
+  nodes = [dag.getNodeByName(name) for name in names]
+
+  newnode = mknode(dag,nodename = 'dynamic_node',task = newtask.s(note = note))
+  for parentnode in nodes:
+    dag.addEdge(parentnode,newnode)
 
 def main():
   dag = random_dag(6,5)
+
+  adage_dag = mk_dag()
+  numbered = {}
+  for i,node in enumerate(dag.nodes()):
+    numbered[node] = mknode(adage_dag,nodename = 'demo_node_{}'.format(node), task = hello.s(workdir = 'workdir_{}'.format(node)))
+  for i,node in enumerate(dag.nodes()):
+    print 'pre for: {} are: {}'.format(node,dag.predecessors(node))
+    for parent in dag.predecessors(node):
+      adage_dag.addEdge(numbered[parent],numbered[node])
+  
+
   logging.basicConfig(level = logging.DEBUG)
 
   rules = []
-  rules += [ (nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
-             (nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
+  rules += [ Rule(nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
+             Rule(nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
            ]
 
-  adage.rundag(dag,rules,track = True, workdir = 'workdirtrack', trackevery = 4)
+  adage.rundag(adage_dag,rules,track = True, workdir = 'workdirtrack', trackevery = 4)
 
 if __name__=='__main__':
   main()
