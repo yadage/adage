@@ -17,7 +17,10 @@ class MultiProcBackend(object):
     try:
       self.result_of(result)
     except:
-      return sys.exc_info()
+      t,v,tb =  sys.exc_info()
+      import traceback
+      traceback.print_tb(tb)
+      return (t,v)
       
 class CeleryBackend(object):
   def __init__(self,app):
