@@ -1,5 +1,7 @@
 import adage
-from adage import adagetask, rulefunc,mknode,signature,get_node_by_name,result_of, mk_dag
+import adage.dagstate
+from adage import adagetask, functorize, Rule,mknode, mk_dag
+
 import networkx as nx
 import random
 import logging
@@ -26,38 +28,38 @@ def mergepdf():
   open('merged.pdf','a').close()
   
 
-@rulefunc
+@functorize
 def variable_nodes_done(varnodes,dag):
   #ready if we have a finished variable node that has no ancestors
-  return all([adage.node_status(dag,n['nodenr']) for n in varnodes])
+  return all([adage.dagstate.node_status(n) for n in varnodes])
 
-@rulefunc
+@functorize
 def schedule_pdf(fixednodes, varnodes,dag):
   log.info('scheduling pdf')
   allpdfjobs = fixednodes
   for node in varnodes:
-    npdf = result_of(node)
+    npdf = node.result_of()
     allpdfjobs += [mknode(dag,
-                          sig = pdfproducer.s(name = 'fromvar_{}_{}'.format(node['nodename'],i)),
+                          task = pdfproducer.s(name = 'fromvar_{}_{}'.format(node.name,i)),
                           depends_on = [node]) for i in range(npdf)]
   
-  mknode(dag,sig = mergepdf.s(),depends_on = allpdfjobs)
+  mknode(dag,task = mergepdf.s(),depends_on = allpdfjobs)
   
 def main():
   dag = adage.mk_dag()
   
-  fix0 = mknode(dag,sig = pdfproducer.s(name = 'fixed'))
-  var1 = mknode(dag,nodename = 'variable1', sig = variableoutput.s())
-  var2 = mknode(dag,nodename = 'variable2', sig = variableoutput.s())
+  fix0 = mknode(dag,task = pdfproducer.s(name = 'fixed'))
+  var1 = mknode(dag,nodename = 'variable1', task = variableoutput.s())
+  var2 = mknode(dag,nodename = 'variable2', task = variableoutput.s())
 
   varnodes = [var1,var2]
 
   rules = []
   rules += [
-    (variable_nodes_done.s(varnodes),schedule_pdf.s([fix0],varnodes))
+    Rule(variable_nodes_done.s(varnodes),schedule_pdf.s([fix0],varnodes))
   ]
 
-  adage.rundag(dag,rules,track = True)
+  adage.rundag(dag,rules,track = True, workdir = 'bla')
 
 if __name__=='__main__':
   main()

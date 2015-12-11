@@ -59,6 +59,8 @@ def mcviz(hepmcfile):
 
   chill()
 
+  raise RuntimeError
+
   return svgfilename
 
 @adagetask
