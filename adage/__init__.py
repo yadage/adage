@@ -4,8 +4,6 @@ import os
 import sys
 import dagstate
 import time
-
-import adage.trackers
 from decorators import *
 from dagutils import *
 
