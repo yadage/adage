@@ -3,7 +3,10 @@
 import logging
 import adage
 from adage import adagetask, functorize, mknode,Rule, mk_dag
-from celery import Celery
+try:
+  from celery import Celery
+except ImportError:
+  pass
 import adage.backends
 
 
@@ -32,8 +35,6 @@ def rulebody(dag):
   for i in range(6):
     mknode(dag,mytask.s(i), depends_on = [depnode])
 
-  
-app = Celery('simple', broker = 'redis://', backend = 'redis://')
 
 def main():
   
