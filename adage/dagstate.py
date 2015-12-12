@@ -1,5 +1,4 @@
 import logging
-import time
 import nodestate
 
 log = logging.getLogger(__name__)
@@ -25,7 +24,6 @@ def upstream_failure(dag,nodeobj):
   return any(upstream_status)
 
 def node_status(nodeobj):
-  state = nodeobj.state()
   submitted = nodeobj.submitted
   ready = nodeobj.ready()
   successful = nodeobj.successful()

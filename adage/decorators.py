@@ -1,6 +1,3 @@
-import functools
-
-
 def qualifiedname(thing):
   if thing.__module__ != '__main__':
     return '{}.{}'.format(thing.__module__,thing.__name__)

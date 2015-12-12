@@ -2,10 +2,9 @@
 
 import logging
 import adage
-from adage import adagetask, functorize, mknode,Rule, mknode, mk_dag
+from adage import adagetask, functorize, mknode,Rule, mk_dag
 from celery import Celery
-from adage.backends import CeleryBackend, DummyBackend, MultiProcBackend
-
+import adage.backends
 
 
 logging.basicConfig(level = logging.INFO)
@@ -43,7 +42,7 @@ def main():
   one = mknode(dag,mytask.s(1))
   two = mknode(dag,mytask.s(3), depends_on = [one])
   
-  backend = MultiProcBackend(2)
+  backend = adage.backends.MultiProcBackend(2)
   
   rules = [Rule(predicate.s(),rulebody.s())]
   

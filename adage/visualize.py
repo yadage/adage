@@ -4,7 +4,7 @@ import dagstate
 import subprocess
 import os
 import nodestate
-import math
+
 def print_next_dag(dag,trackdir):
   nextnr = 0
   if glob.glob('{}/*.dot'.format(trackdir)):

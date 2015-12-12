@@ -60,7 +60,7 @@ def mcviz(hepmcfile):
   chill()
 
   log.info('intentionally raising exception to test failing tasks')
-  raise RuntimeError
+  raise RuntimeError('intentionally raising exception to test failing tasks')
 
   return svgfilename
 

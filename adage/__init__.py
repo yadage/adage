@@ -1,16 +1,12 @@
-import multiprocessing
-import time
 import networkx as nx
-import subprocess
-import glob
-import adage.trackers
 import logging
 import os
-import shutil
 import sys
 import dagstate
+import time
 
-from decorators import adagetask,functorize,Rule, qualifiedname
+import adage.trackers
+from decorators import *
 from dagutils import *
 
 log = logging.getLogger(__name__)
@@ -116,9 +112,9 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
 
   if not validate_finished_dag(dag):
     log.error('DAG execution not validating')
-    raise RuntimeError
+    raise RuntimeError('DAG execution not validating')
   log.info('execution valid. (in terms of execution order)')
   
   if any(dag.getNode(x).state() == nodestate.FAILED for x in dag.nodes()):
     log.error('raising RunTimeError due to failed jobs')
-    raise RuntimeError 
+    raise RuntimeError('DAG execution failed')

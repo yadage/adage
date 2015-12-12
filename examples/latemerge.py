@@ -1,8 +1,7 @@
 import adage
 import adage.dagstate
-from adage import adagetask, functorize, Rule,mknode, mk_dag
+from adage import adagetask, functorize, Rule,mknode
 
-import networkx as nx
 import random
 import logging
 import time
