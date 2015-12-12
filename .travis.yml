@@ -8,4 +8,3 @@ install:
   - pip install pyflakes
 script:
   - pyflakes .
-  - python examples/simple.py

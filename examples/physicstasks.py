@@ -83,5 +83,3 @@ def plotting(workdir,yodafile):
   
   chill()
   return plotfilename
-
-
