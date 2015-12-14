@@ -13,7 +13,7 @@ def download_done(dag):
     #we can only run pythia once the donwload is done and we know hoe many LHE files we have
     download_node = dag.getNodeByName('download')
     if download_node:
-            return adage.dagstate.node_status(download_node)
+        return adage.dagstate.node_status(download_node)
     return False
     
 @functorize

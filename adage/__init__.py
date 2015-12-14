@@ -1,7 +1,6 @@
 import networkx as nx
 import logging
 import os
-import sys
 import dagstate
 import time
 from adage import trackers
