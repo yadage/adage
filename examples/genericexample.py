@@ -29,54 +29,54 @@ def random_dag(nodes, edges):
 
 @adagetask
 def hello(workdir):
-  log.info("running job in workdir {}".format(workdir))
-  time.sleep(2+5*random.random())
-  if random.random() < 0.001:
-    log.error('ERROR! in workdir {}'.format(workdir))
-    raise IOError
-  log.info("done {}".format(workdir))
+    log.info("running job in workdir {}".format(workdir))
+    time.sleep(2+5*random.random())
+    if random.random() < 0.001:
+        log.error('ERROR! in workdir {}'.format(workdir))
+        raise IOError
+    log.info("done {}".format(workdir))
 
 @adagetask
 def newtask(note):
-  log.info('doing some other task this is our note: {}'.format(note))
-  time.sleep(2+5*random.random())
+    log.info('doing some other task this is our note: {}'.format(note))
+    time.sleep(2+5*random.random())
 
 
 @functorize
 def nodes_present(nodenrs,dag):
-  names = ['demo_node_{}'.format(i) for i in nodenrs]
-  return all(dag.getNodeByName(name) for name in names)
+    names = ['demo_node_{}'.format(i) for i in nodenrs]
+    return all(dag.getNodeByName(name) for name in names)
 
 @functorize
 def schedule_after_these(parentnrs,note,dag):
-  names = ['demo_node_{}'.format(i) for i in parentnrs]
-  nodes = [dag.getNodeByName(name) for name in names]
+    names = ['demo_node_{}'.format(i) for i in parentnrs]
+    nodes = [dag.getNodeByName(name) for name in names]
 
-  newnode = mknode(dag,nodename = 'dynamic_node',task = newtask.s(note = note))
-  for parentnode in nodes:
-    dag.addEdge(parentnode,newnode)
+    newnode = mknode(dag,nodename = 'dynamic_node',task = newtask.s(note = note))
+    for parentnode in nodes:
+        dag.addEdge(parentnode,newnode)
 
 def main():
-  dag = random_dag(6,5)
+    dag = random_dag(6,5)
 
-  adage_dag = mk_dag()
-  numbered = {}
-  for node in dag.nodes():
-    numbered[node] = mknode(adage_dag,nodename = 'demo_node_{}'.format(node), task = hello.s(workdir = 'workdir_{}'.format(node)))
-  for i,node in enumerate(dag.nodes()):
-    print 'pre for: {} are: {}'.format(node,dag.predecessors(node))
-    for parent in dag.predecessors(node):
-      adage_dag.addEdge(numbered[parent],numbered[node])
-  
+    adage_dag = mk_dag()
+    numbered = {}
+    for node in dag.nodes():
+        numbered[node] = mknode(adage_dag,nodename = 'demo_node_{}'.format(node), task = hello.s(workdir = 'workdir_{}'.format(node)))
+    for i,node in enumerate(dag.nodes()):
+        print 'pre for: {} are: {}'.format(node,dag.predecessors(node))
+        for parent in dag.predecessors(node):
+            adage_dag.addEdge(numbered[parent],numbered[node])
+    
 
-  logging.basicConfig(level = logging.DEBUG)
+    logging.basicConfig(level = logging.DEBUG)
 
-  rules = []
-  rules += [ Rule(nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
-             Rule(nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
-           ]
+    rules = []
+    rules += [ Rule(nodes_present.s([1]), schedule_after_these.s([1],note = 'depends on one')),
+                         Rule(nodes_present.s([4,1]), schedule_after_these.s([4,1],note = 'depends on two'))
+                     ]
 
-  adage.rundag(adage_dag,rules,track = True, workdir = 'workdirtrack', trackevery = 4)
+    adage.rundag(adage_dag,rules,track = True, workdir = 'workdirtrack', trackevery = 4)
 
 if __name__=='__main__':
-  main()
+    main()
