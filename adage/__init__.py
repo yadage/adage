@@ -8,6 +8,10 @@ from adage import trackers
 from adage import nodestate
 from adage.dagutils import mk_dag, mknode
 
+#silene pyflakes
+assert mk_dag
+assert mknode
+
 __all__ = ['decorators','dagutils','trackers']
 
 log = logging.getLogger(__name__)
