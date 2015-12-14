@@ -76,7 +76,7 @@ def rivet(workdir,hepmcfiles):
 def plotting(workdir,yodafile):
   #let's say we have 10 files
   
-  log.info('plotting stuff in yoda file')
+  log.info('plotting stuff in yoda file {}'.format(yodafile))
 
   plotfilename = '{}/plots.pdf'.format(workdir)
   open(plotfilename, 'a').close()

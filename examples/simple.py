@@ -41,7 +41,7 @@ def main():
   dag = mk_dag()
 
   one = mknode(dag,mytask.s(1))
-  two = mknode(dag,mytask.s(3), depends_on = [one])
+  mknode(dag,mytask.s(3), depends_on = [one])
   
   backend = adage.backends.MultiProcBackend(2)
   

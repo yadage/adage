@@ -29,17 +29,17 @@ def schedule_pythia(dag):
   # to schedule them
   hepmcfiles    = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
 
-  mcviz_node    = mknode(dag,mcviz.s(hepmcfile = hepmcfiles[0]), depends_on = pythia_nodes[0:1])
+  mknode(dag,mcviz.s(hepmcfile = hepmcfiles[0]), depends_on = pythia_nodes[0:1])
 
   #Rivet and then produce some plots.
   rivet_node    = mknode(dag,rivet.s(workdir = 'here', hepmcfiles = hepmcfiles), depends_on = pythia_nodes)
-  plotting_node = mknode(dag,plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
+  mknode(dag,plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
     
 def build_initial_dag():
   dag = adage.mk_dag()
 
   prepare_node  = mknode(dag,prepare.s(workdir = 'here'))
-  download_node = mknode(dag,download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
+  mknode(dag,download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
 
   #possible syntax that could be nice using partial function execution
   #  download_node = do(download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
