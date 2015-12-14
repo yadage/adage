@@ -1,5 +1,5 @@
 import adage
-from adage import functorize,Rule,mknode
+from adage import adagetask, functorize, Rule, mknode, mk_dag
 import adage.dagstate
 
 #import some task functions that we'd like to run

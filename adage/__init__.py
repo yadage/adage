@@ -7,13 +7,14 @@ import time
 from adage import trackers
 from adage import nodestate
 from adage.dagutils import mk_dag, mknode
-from adage.decorators import functorize, adagetask
+from adage.decorators import functorize, adagetask, Rule
 
 #silene pyflakes
 assert mk_dag
 assert mknode
 assert functorize
 assert adagetask
+assert Rule
 
 __all__ = ['decorators','dagutils','trackers']
 
@@ -61,7 +62,7 @@ def update_dag(dag,rules):
       log.debug('rule not ready yet')
 
 def process_dag(dag,rules,backend):
-  nrules = len(rules)
+  if rules: pass
   for node in nx.topological_sort(dag):
     nodeobj = dag.getNode(node)
 

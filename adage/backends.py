@@ -16,7 +16,7 @@ class MultiProcBackend(object):
   def fail_info(self,result):
     try:
       self.result_of(result)
-    except:
+    except RuntimeError:
       t,v,tb =  sys.exc_info()
       import traceback
       traceback.print_tb(tb)
@@ -37,7 +37,7 @@ class CeleryBackend(object):
   def fail_info(self,result):
     try:
       self.result_of(result)
-    except:
+    except RuntimeError:
       return sys.exc_info()
     
 class DummyResult(object):    
