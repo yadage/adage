@@ -45,12 +45,17 @@ class DummyResult(object):
   
 class DummyBackend(object):
   def submit(self,task):
+    if task: pass
     return DummyResult()
   def result_of(self,result):
+    if result: pass
     return None
   def ready(self,result):
+    if result: pass
     return True
   def successful(self,result):
+    if result: pass
     return False
   def fail_info(self,result):
+    if result: pass
     return 'cannot give reason :( '

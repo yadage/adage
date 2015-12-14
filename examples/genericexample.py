@@ -61,7 +61,7 @@ def main():
 
   adage_dag = mk_dag()
   numbered = {}
-  for i,node in enumerate(dag.nodes()):
+  for node in dag.nodes():
     numbered[node] = mknode(adage_dag,nodename = 'demo_node_{}'.format(node), task = hello.s(workdir = 'workdir_{}'.format(node)))
   for i,node in enumerate(dag.nodes()):
     print 'pre for: {} are: {}'.format(node,dag.predecessors(node))
