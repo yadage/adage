@@ -25,7 +25,7 @@ def colorize_graph(dag):
       nodestate.SUCCESS: 'green'
     }
     
-    dot_attr = {'label':'{} '.format(nodeobj.name,nodeobj.task), 'style':'filled', 'color': color_dict[nodeobj.state()]}
+    dot_attr = {'label':'{} '.format(nodeobj.name), 'style':'filled', 'color': color_dict[nodeobj.state()]}
 
     #for nodes that have an upstream failure, let's do a special color (their state will be DEFINED)
     if nodeobj.state() == nodestate.DEFINED and dagstate.upstream_failure(dag,nodeobj):
