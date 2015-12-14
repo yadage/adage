@@ -61,8 +61,7 @@ def update_dag(dag,rules):
     else:
       log.debug('rule not ready yet')
 
-def process_dag(dag,rules,backend):
-  if rules: pass
+def process_dag(backend,dag,*unused):
   for node in nx.topological_sort(dag):
     nodeobj = dag.getNode(node)
 
@@ -108,7 +107,7 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
   #while we have nodes that can be submitted
   while nodes_left_or_rule(dag,rules):
     update_dag(dag,rules)
-    process_dag(dag,rules,backend)
+    process_dag(backend,dag,rules)
     for t in trackerlist: t.track(dag)
     time.sleep(1)
     

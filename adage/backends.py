@@ -48,19 +48,11 @@ class DummyBackend(object):
     if task:
       pass
     return DummyResult()
-  def result_of(self,result):
-    if result:
-      pass
+  def result_of(self,*unused):
     return None
-  def ready(self,result):
-    if result:
-      pass
+  def ready(self,*unused):
     return True
-  def successful(self,result):
-    if result:
-      pass
+  def successful(self,*unused):
     return False
-  def fail_info(self,result):
-    if result:
-      pass
+  def fail_info(self,*unused):
     return 'cannot give reason :( '
