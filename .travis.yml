@@ -1,3 +1,4 @@
+sudo: required
 language: python
 python:
   - "2.7"
@@ -6,9 +7,9 @@ python:
 install:
   - pip install . --process-dependency-links
   - pip install pyflakes
-  - apt-get update
-  - apt-get install -y graphviz
-  - apt-get install -y imagemagick
+  - sudo apt-get update
+  - sudo apt-get install -y graphviz
+  - sudo apt-get install -y imagemagick
 script:
   - pyflakes adage
   - python examples/simple.py
