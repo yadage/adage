@@ -6,6 +6,7 @@ python:
 install:
   - pip install . --process-dependency-links
   - pip install pyflakes
+  - apt-get update
   - apt-get install -y graphviz
   - apt-get install -y imagemagick
 script:
