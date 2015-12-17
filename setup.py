@@ -9,7 +9,7 @@ setup(
     packages = find_packages(),
     install_requires = [
         'networkx',
-        'pydot',
+        'pydot2',
         'pygraphviz'
     ]
 )
