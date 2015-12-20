@@ -12,10 +12,15 @@ import adage.backends
 
 logging.basicConfig(level = logging.INFO)
 
+log = logging.getLogger(__name__)
+
 
 @adagetask
 def mytask(one):
     import time
+    log.info('what...')
+    import os
+    log.info(os.getpid())
     time.sleep(4)
     print one
 
@@ -48,7 +53,7 @@ def main():
     rules = [Rule(predicate.s(),rulebody.s())]
     
     try:
-        adage.rundag(dag,rules, backend = backend, track = True, workdir = 'simpleTrack')
+        adage.rundag(dag,rules, backend = backend, track = True, workdir = 'simpleTrack', trackevery = 10)
     except RuntimeError:
         print '===> ERROR'
 

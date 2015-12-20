@@ -8,5 +8,5 @@ class NodeState(object):
     
 DEFINED     = NodeState('DEFINED')
 RUNNING     = NodeState('RUNNING')
-FAILED        = NodeState('FAILED')
+FAILED      = NodeState('FAILED')
 SUCCESS     = NodeState('SUCCESS')

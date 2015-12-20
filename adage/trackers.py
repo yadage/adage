@@ -31,7 +31,39 @@ class GifTracker(object):
 
     def update(self,dag):
         viz.print_next_dag(dag,self.workdir)
+
+import datetime        
+import networkx as nx
+class TextSnapShotTracker(object):
+    def __init__(self,logfilename,mindelta):
+        self.logfilename = logfilename
+        self.mindelta = mindelta
+        self.last_update = None
+
+    def initialize(self,dag):
+        with open(self.logfilename,'w') as logfile:
+            timenow = datetime.datetime.now().isoformat()
+            logfile.write('========== ADAGE LOG BEGIN at {} ==========\n'.format(timenow))
+
+    def track(self,dag):
+        now = time.time()
+        if not self.last_update or (now-self.last_update) > self.mindelta:
+            self.last_update = now
+            self.update(dag)
+
+    def update(self,dag):
+        with open(self.logfilename,'a') as logfile:
+            logfile.write('---------- snapshot at {}\n'.format(datetime.datetime.now().isoformat()))
+            for node in nx.topological_sort(dag):
+                nodeobj = dag.getNode(node)
+                logfile.write('name: {} obj: {} submitted: {}\n'.format(nodeobj.name,nodeobj,nodeobj.submitted))
+    def finalize(self,dag):
+        with open(self.logfilename,'a') as logfile:
+            timenow = datetime.datetime.now().isoformat()
+            logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
         
+            
+
 class SimpleReportTracker(object):
     def __init__(self,log):
         self.log = log

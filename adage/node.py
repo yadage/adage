@@ -1,6 +1,7 @@
 import nodestate
 import time
 
+
 class Node(object):
     def __init__(self,identifier,name,task):
         self.identifier = identifier
