@@ -59,6 +59,7 @@ class TextSnapShotTracker(object):
                 logfile.write('name: {} obj: {} submitted: {}\n'.format(nodeobj.name,nodeobj,nodeobj.submitted))
     def finalize(self,dag):
         with open(self.logfilename,'a') as logfile:
+            self.update(dag)
             timenow = datetime.datetime.now().isoformat()
             logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
         
