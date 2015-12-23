@@ -44,6 +44,7 @@ class TextSnapShotTracker(object):
         with open(self.logfilename,'w') as logfile:
             timenow = datetime.datetime.now().isoformat()
             logfile.write('========== ADAGE LOG BEGIN at {} ==========\n'.format(timenow))
+        self.update(dag)
 
     def track(self,dag):
         now = time.time()

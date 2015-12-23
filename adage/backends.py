@@ -1,5 +1,6 @@
 import multiprocessing
 import sys
+import traceback
 
 class MultiProcBackend(object):
     def __init__(self,poolsize):
@@ -16,9 +17,8 @@ class MultiProcBackend(object):
     def fail_info(self,result):
         try:
             self.result_of(result)
-        except RuntimeError:
+        except:
             t,v,tb =    sys.exc_info()
-            import traceback
             traceback.print_tb(tb)
             return (t,v)
             
@@ -37,7 +37,7 @@ class CeleryBackend(object):
     def fail_info(self,result):
         try:
             self.result_of(result)
-        except RuntimeError:
+        except:
             return sys.exc_info()
         
 class DummyResult(object):        

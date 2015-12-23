@@ -98,19 +98,28 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
         
     for t in trackerlist: t.initialize(dag)
     #while we have nodes that can be submitted
-    while nodes_left_or_rule(dag,rules):
-        update_dag(dag,rules)
-        process_dag(backend,dag,rules)
-        for t in trackerlist: t.track(dag)
-        time.sleep(1)
-        
+
+    try:
+      while nodes_left_or_rule(dag,rules):
+          update_dag(dag,rules)
+          process_dag(backend,dag,rules)
+          for t in trackerlist: t.track(dag)
+          time.sleep(1)
+    except:
+      log.error('some weird exception caught in adage process loop')
+      raise  
+
     log.info('all running jobs are finished.')
     
     for node in dag.nodes():
         #check node status one last time so we pick up the finishing times
         dagstate.node_status(dag.getNode(node))
+
+    log.info('track last time')
         
     for t in trackerlist: t.finalize(dag)
+
+    log.info('validating execution')
 
     if not validate_finished_dag(dag):
         log.error('DAG execution not validating')
