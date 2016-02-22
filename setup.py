@@ -10,6 +10,7 @@ setup(
     install_requires = [
         'networkx',
         'pydot2',
-        'pygraphviz'
+        'pygraphviz',
+        'pydotplus'
     ]
 )
