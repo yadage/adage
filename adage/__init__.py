@@ -8,6 +8,7 @@ from adage import nodestate
 from adage.dagutils import mk_dag, mknode
 from adage.decorators import functorize, adagetask, Rule
 
+
 #silene pyflakes
 assert mk_dag
 assert mknode

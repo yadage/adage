@@ -1,5 +1,6 @@
 import glob
 import networkx as nx
+from networkx.drawing.nx_pydot import write_dot
 import dagstate
 import subprocess
 import os
@@ -43,7 +44,7 @@ def print_dag(dag,name,trackdir):
     pngfilename = '{}/{}.png'.format(trackdir,name) 
     colorized = colorize_graph(dag)
 
-    nx.write_dot(colorized,dotfilename)
+    write_dot(colorized,dotfilename)
     with open(pngfilename,'w') as pngfile:
         subprocess.call(['dot','-Tpng','-Gsize=18,12\!','-Gdpi=100 ',dotfilename], stdout = pngfile)
         subprocess.call(['convert',pngfilename,'-gravity','North','-background','white','-extent','1800x1200',pngfilename])
