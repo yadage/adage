@@ -9,7 +9,7 @@ class Node(object):
         self.submit_time = None
         self.ready_by_time = None
         self.the_state = nodestate.DEFINED
-        
+        self.define_time = time.time()        
         self.task = task
         self.the_result = None
         self.the_backend = None
@@ -74,9 +74,11 @@ class Node(object):
             return False
 
         ready = self.backend.ready(self.the_result)
+        if not ready:
+            return False
         if not self.ready_by_time:
             self.ready_by_time = time.time()
-        return ready
+        return True
 
     def result_of(self):
         return self.backend.result_of(self.the_result)
