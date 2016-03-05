@@ -1,14 +1,11 @@
-import glob
 import networkx as nx
-from networkx.drawing.nx_pydot import write_dot
 import dagstate
 import subprocess
-import os
 import nodestate
 
 def node_visible(node,time,start,stop):
     norm_node_time = (node.submit_time-start)/(stop-start)
-    return (node.define_time-start)/(stop-start) < time    
+    return norm_node_time < time    
 
 def colorize_graph(dag,normtime = None):
     colorized = nx.DiGraph()
@@ -23,7 +20,7 @@ def colorize_graph(dag,normtime = None):
         
         time = start + normtime*(stop-start)
 
-        joblength = nodeobj.ready_by_time-nodeobj.submit_time
+        # joblength = nodeobj.ready_by_time-nodeobj.submit_time
         # print 'joblength: {} {}'.format(nodeobj.name,joblength)
 
         color = None
@@ -38,8 +35,8 @@ def colorize_graph(dag,normtime = None):
                 color = 'green'
 
         visible = node_visible(nodeobj,normtime,start,stop)
-        hmtimes = [start,nodeobj.submit_time,nodeobj.ready_by_time,stop]
-        hmnormes = [(t-start)/(stop-start) for t in hmtimes]
+        # hmtimes = [start,nodeobj.submit_time,nodeobj.ready_by_time,stop]
+        # hmnormes = [(t-start)/(stop-start) for t in hmtimes]
         # print 'times: {} {} {} {}'.format(normtime,hmnormes,color,visible)
 
         style = 'filled' if visible else 'invis'
