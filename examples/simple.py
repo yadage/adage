@@ -22,7 +22,9 @@ def mytask(one):
 @adagetask
 def tofail(one):
     print 'failing'
-    raise RuntimeError
+    time.sleep(one)
+    import random
+    if random.random() < 0.5: raise RuntimeError
 
 @functorize
 def predicate(dag,depnode):

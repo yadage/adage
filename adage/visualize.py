@@ -25,8 +25,10 @@ def colorize_graph(dag,normtime = None):
         # print 'joblength: {} {}'.format(nodeobj.name,joblength)
 
         color = None
+        if dagstate.upstream_failure(dag,nodeobj):
+            color = 'blue'
         if start <= time < nodeobj.submit_time:
-            color = 'blue' if dagstate.upstream_failure(dag,nodeobj) else 'grey'
+            color = 'grey'
         if nodeobj.submit_time <= time < nodeobj.ready_by_time:
             color = 'yellow'
         if nodeobj.ready_by_time <= time <= stop:
@@ -35,6 +37,7 @@ def colorize_graph(dag,normtime = None):
             if nodeobj.state()==nodestate.SUCCESS:
                 color = 'green'
 
+        
         visible = node_visible(nodeobj,normtime,start,stop)
         # hmtimes = [start,nodeobj.submit_time,nodeobj.ready_by_time,stop]
         # hmnormes = [(t-start)/(stop-start) for t in hmtimes]
