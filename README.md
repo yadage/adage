@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/lukasheinrich/adage.svg?branch=master)](https://travis-ci.org/lukasheinrich/adage)
 [![Code Health](https://landscape.io/github/lukasheinrich/adage/master/landscape.svg?style=flat)](https://landscape.io/github/lukasheinrich/adage/master)
+[![PyPI](https://img.shields.io/pypi/v/adage.svg)](https://pypi.python.org/pypi/adage)
 
 This is a small experimental package to see how one could describe workflows that are not completely known at definition time. Tasks should be runnable both in a multiprocessing pool, or using a number of celery workers.
 
