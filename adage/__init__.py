@@ -94,7 +94,7 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
     trackerlist = [trackers.SimpleReportTracker(log)]
     
     if track:
-        trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir), mindelta = trackevery)]
+        trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
         
     for t in trackerlist: t.initialize(dag)

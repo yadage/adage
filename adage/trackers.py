@@ -1,25 +1,24 @@
 import time
-import adage.visualize as viz
 import os
 import shutil
 import subprocess
 import dagstate
-
+import datetime        
+import networkx as nx
+import adage.visualize as viz
 
 class GifTracker(object):
-    def __init__(self,gifname,workdir,mindelta,frames = 10):
-        self.last_update = None
+    def __init__(self,gifname,workdir,frames = 10):
         self.gifname = gifname
         self.workdir = workdir
-        self.mindelta = mindelta
         self.frames = frames
-
+        
     def initialize(self,dag):
         pass
         
     def track(self,dag):
         pass
-
+        
     def finalize(self,dag):
         if os.path.exists(self.workdir):
             shutil.rmtree(self.workdir)
@@ -28,12 +27,7 @@ class GifTracker(object):
             viz.print_dag(dag,'dag_{:02}'.format(i),self.workdir,time = i/float(self.frames))
         subprocess.call('convert -delay 50 $(ls {}/*.png|sort) {}'.format(self.workdir,self.gifname),shell = True)
         shutil.rmtree(self.workdir)
-        
-    def update(self,dag):
-        viz.print_next_dag(dag,self.workdir)
-
-import datetime        
-import networkx as nx
+                
 class TextSnapShotTracker(object):
     def __init__(self,logfilename,mindelta):
         self.logfilename = logfilename
@@ -66,8 +60,6 @@ class TextSnapShotTracker(object):
             timenow = datetime.datetime.now().isoformat()
             logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
         
-            
-
 class SimpleReportTracker(object):
     def __init__(self,log):
         self.log = log

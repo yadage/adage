@@ -2,6 +2,8 @@ import networkx as nx
 import dagstate
 import subprocess
 import nodestate
+import StringIO
+import datetime
 
 def node_visible(node,time,start,stop):
     norm_node_time = (node.submit_time-start)/(stop-start)
@@ -48,6 +50,7 @@ def colorize_graph(dag,normtime = None):
     
     # print '------------'
     dotformat = nx.drawing.nx_pydot.to_pydot(colorized)
+    dotformat.set_label(datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S'))
     for e in dotformat.get_edges():
         edge_visible =  node_visible(dag.getNode(e.get_destination().replace('"','')),normtime,start,stop)
         if not edge_visible:
@@ -55,10 +58,8 @@ def colorize_graph(dag,normtime = None):
     return dotformat
 
 def print_dag(dag,name,trackdir,time = None):
-    dotfilename = '{}/{}.dot'.format(trackdir,name)
     pngfilename = '{}/{}.png'.format(trackdir,name) 
-
-    open(dotfilename,'w').write(colorize_graph(dag,time).to_string())
     with open(pngfilename,'w') as pngfile:
-        subprocess.call(['dot','-Tpng','-Gsize=18,12\!','-Gdpi=100 ',dotfilename], stdout = pngfile)
+        p = subprocess.Popen(['dot','-Tpng','-Gsize=18,12\!','-Gdpi=100'], stdout = pngfile, stdin = subprocess.PIPE)
+        p.communicate(colorize_graph(dag,time).to_string())
         subprocess.call(['convert',pngfilename,'-gravity','North','-background','white','-extent','1800x1200',pngfilename])
