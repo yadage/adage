@@ -5,7 +5,7 @@ import nodestate
 import datetime
 
 def node_visible(node,time,start,stop):
-    norm_node_time = (node.submit_time-start)/(stop-start)
+    norm_node_time = (node.define_time-start)/(stop-start)
     return norm_node_time < time    
 
 def colorize_graph(dag,normtime = None):
@@ -61,4 +61,3 @@ def print_dag(dag,name,trackdir,time = None):
     with open(pngfilename,'w') as pngfile:
         p = subprocess.Popen(['dot','-Tpng','-Gsize=18,12\!','-Gdpi=100'], stdout = pngfile, stdin = subprocess.PIPE)
         p.communicate(colorize_graph(dag,time).to_string())
-        subprocess.call(['convert',pngfilename,'-gravity','North','-background','white','-extent','1800x1200',pngfilename])
