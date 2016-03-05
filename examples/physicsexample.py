@@ -1,6 +1,6 @@
 import adage
 import adage.dagstate
-from adage import functorize, Rule, mknode, mk_dag
+from adage import functorize, Rule, mknode
 
 #import some task functions that we'd like to run
 from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
