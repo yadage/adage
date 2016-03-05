@@ -36,10 +36,10 @@ def nodes_left_or_rule(dag,rules):
     if any(rule.applicable(dag) for rule in rules):
         return True
 
-    log.debug('nodes we could run: {}'.format(nodes_we_could_run))
+    log.debug('nodes we could run: %s',nodes_we_could_run)
     if nodes_running_or_defined:
-        log.debug('{} nodes that could be run or are running are left.'.format(len(nodes_running_or_defined)))
-        log.debug('nodes are: {}'.format([dag.node[n] for n in nodes_running_or_defined]))
+        log.debug('%s nodes that could be run or are running are left.',len(nodes_running_or_defined))
+        log.debug('nodes are: %s',[dag.node[n] for n in nodes_running_or_defined])
         return True
     else:
         log.info('no nodes can be run anymore')
@@ -62,19 +62,19 @@ def process_dag(backend,dag,*unused):
         if not nodeobj.backend:
             nodeobj.backend = backend
 
-        log.debug("working on node: {} with obj {}".format(node,nodeobj))
+        log.debug("working on node: %s with obj %s",node,nodeobj)
 
         if nodeobj.submitted:
             log.debug("node already submitted. continue")
             continue;
         if dagstate.upstream_ok(dag,nodeobj):
-            log.info('submitting {} job'.format(nodeobj))
+            log.info('submitting %s job',nodeobj)
             nodeobj.result = backend.submit(nodeobj.task)
             submit_time = time.time()
             nodeobj.submitted = submit_time
 
         if dagstate.upstream_failure(dag,nodeobj):
-            log.warning('not submitting node: {} due to upstream failure'.format(node))
+            log.warning('not submitting node: %s due to upstream failure',node)
     
 def rundag(dag,rules, track = False, backend = None, loggername = None, workdir = None, trackevery = 1):
     if loggername:

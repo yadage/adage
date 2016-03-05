@@ -8,7 +8,7 @@ def node_ran_and_failed(nodeobj):
 
 def upstream_ok(dag,nodeobj):
     upstream = dag.predecessors(nodeobj.identifier)
-    log.debug("upstream nodes are {}".format(dag.predecessors(nodeobj.identifier)))
+    log.debug("upstream nodes are %s",dag.predecessors(nodeobj.identifier))
     if not upstream:
         return True
     return all(node_status(dag.getNode(x)) for x in upstream)
@@ -18,16 +18,16 @@ def upstream_failure(dag,nodeobj):
     if not upstream:
         return False
 
-    log.debug('checking upstream nodes {}'.format(upstream))
+    log.debug('checking upstream nodes %s',upstream)
     upstream_status = [node_ran_and_failed(obj) or upstream_failure(dag,obj) for obj in upstream]
-    log.debug('upstream failed: {}'.format(upstream_status))
+    log.debug('upstream failed: %s',upstream_status)
     return any(upstream_status)
 
 def node_status(nodeobj):
     submitted = nodeobj.submitted
     ready = nodeobj.ready()
     successful = nodeobj.successful()
-    log.debug("node {}: submitted: {}, ready: {}, successful: {}".format(nodeobj.identifier,submitted,ready,successful))
+    log.debug("node %s: submitted: %s, ready: %s, successful: %s",nodeobj.identifier,submitted,ready,successful)
 
     return submitted and ready and successful
     
@@ -35,5 +35,5 @@ def node_defined_or_waiting(nodeobj):
     running = (nodeobj.state() == nodestate.RUNNING)
     defined = (nodeobj.state() == nodestate.DEFINED)
 
-    log.debug('defined: {} running {}'.format(defined,running))
+    log.debug('defined: %s running %s',defined,running)
     return running or defined
