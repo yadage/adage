@@ -41,6 +41,8 @@ class TextSnapShotTracker(object):
         self.last_update = None
 
     def initialize(self,dag):
+        if not os.path.exists(os.path.dirname(self.logfilename)):
+            os.makedirs(os.path.dirname(self.logfilename))
         with open(self.logfilename,'w') as logfile:
             timenow = datetime.datetime.now().isoformat()
             logfile.write('========== ADAGE LOG BEGIN at {} ==========\n'.format(timenow))
