@@ -29,16 +29,16 @@ def random_dag(nodes, edges):
 
 @adagetask
 def hello(workdir):
-    log.info("running job in workdir {}".format(workdir))
+    log.info("running job in workdir %s",workdir)
     time.sleep(2+5*random.random())
     if random.random() < 0.001:
-        log.error('ERROR! in workdir {}'.format(workdir))
+        log.error('ERROR! in workdir %s',workdir)
         raise IOError
-    log.info("done {}".format(workdir))
+    log.info("done %s",workdir)
 
 @adagetask
 def newtask(note):
-    log.info('doing some other task this is our note: {}'.format(note))
+    log.info('doing some other task this is our note: %s',note)
     time.sleep(2+5*random.random())
 
 
