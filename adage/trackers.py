@@ -8,7 +8,7 @@ import networkx as nx
 import adage.visualize as viz
 
 class GifTracker(object):
-    def __init__(self,gifname,workdir,frames = 10):
+    def __init__(self,gifname,workdir,frames = 20):
         self.gifname = gifname
         self.workdir = workdir
         self.frames = frames

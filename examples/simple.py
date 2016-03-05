@@ -33,7 +33,7 @@ def rulebody(dag,depnode):
     mapnodes = []
     for i in range(6):
         mapnodes += [mknode(dag,mytask.s(3*i), depends_on = [depnode], nodename = 'map')]
-    mknode(dag,mytask.s(1), depends_on = mapnodes, nodename = 'reduce')
+    mknode(dag,mytask.s(3), depends_on = mapnodes, nodename = 'reduce')
 
 
 def main():

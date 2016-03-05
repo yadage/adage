@@ -5,6 +5,12 @@
 
 This is a small experimental package to see how one could describe workflows that are not completely known at definition time. Tasks should be runnable both in a multiprocessing pool, or using a number of celery workers.
 
+### Example
+
+![example image](./example_workflow.gif "dynamically extended workflow")
+
+
+
 ## Problem
 
 Workflows can be comfortably represented by directed acyclic graphs (DAGs). But sometimes the precise structure of the graph is not known before the processing starts. Instead often one only has partial information of what kind of edges are possible and depending on a certain result in a node the DAG might be appended with more nodes and edges.
@@ -28,12 +34,3 @@ There are a couple of rule that the rules need to obey themselves in order to ma
 	
 - the only valid edges that you can dynamically added are ones that point away from existing nodes to new nodes.. edges directed *towards* existing nodes would introduce new dependencies which were not present before and so that job might have already run, or be currently running
 
-### Example
-
-<!---
-Generic Example
-![example image](./examples/genericworkflow.gif "dynamically extended workflow")
-
-High Energy Physics Example
-![HEP image](./examples/physicsworkflow.gif "dynamically extended physics workflow")
--->
