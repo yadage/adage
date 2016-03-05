@@ -2,7 +2,6 @@ import networkx as nx
 import dagstate
 import subprocess
 import nodestate
-import StringIO
 import datetime
 
 def node_visible(node,time,start,stop):
