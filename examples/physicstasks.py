@@ -36,7 +36,7 @@ def download(workdir):
 def pythia(lhefilename):
     #let's say we have 10 files
     hepmcfilename = lhefilename.rsplit('.lhe')[0]+'.hepmc'
-    log.info('running pythia: {} -> {}'.format(lhefilename,hepmcfilename))
+    log.info('running pythia: %s -> %s',lhefilename,hepmcfilename)
 
     open(hepmcfilename, 'a').close()
 
@@ -55,7 +55,7 @@ def mcviz(hepmcfile):
     svgfilename = '{}/mcviz.svg'.format(os.path.dirname(hepmcfile))
     open(svgfilename, 'a').close()
 
-    log.info('running mcviz on : {} -> {}'.format(hepmcfile,svgfilename))
+    log.info('running mcviz on : %s -> %s',hepmcfile,svgfilename)
 
     chill()
 
@@ -66,7 +66,7 @@ def mcviz(hepmcfile):
 
 @adagetask
 def rivet(workdir,hepmcfiles):
-    log.info('running rivet on these files: {}'.format(hepmcfiles))
+    log.info('running rivet on these files: %s',hepmcfiles)
     yodafilename = '{}/Rivet.yoda'.format(workdir)
     open(yodafilename, 'a').close()
     chill()
@@ -76,7 +76,7 @@ def rivet(workdir,hepmcfiles):
 def plotting(workdir,yodafile):
     #let's say we have 10 files
     
-    log.info('plotting stuff in yoda file {}'.format(yodafile))
+    log.info('plotting stuff in yoda file %s',yodafile)
 
     plotfilename = '{}/plots.pdf'.format(workdir)
     open(plotfilename, 'a').close()

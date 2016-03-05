@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 @adagetask
 def mytask(one):
-    log.info('sleeping for {}, pid: {}'.format(one,os.getpid()))
+    log.info('sleeping for %s, pid: %s',one,os.getpid())
     time.sleep(one)
 
 @adagetask
