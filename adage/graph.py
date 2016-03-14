@@ -1,11 +1,13 @@
 import networkx as nx
+from node import Node
+
 class AdageDAG(nx.DiGraph):
-    def addTask(task, nodename = 'node', depends_on = []):
+    def addTask(self,task, nodename = 'node', depends_on = []):
         node = Node(nodename,task)
-        dag.addNode(node)
+        self.addNode(node)
         for parent in depends_on:
-            dag.addEdge(parent,node)
-        return nodeobj
+            self.addEdge(parent,node)
+        return node
     
     def addNode(self,nodeobj):
         self.add_node(nodeobj.identifier, {'nodeobj': nodeobj})

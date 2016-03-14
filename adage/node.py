@@ -1,5 +1,6 @@
 import nodestate
 import time
+import uuid
 import logging
 
 log = logging.getLogger(__name__)
