@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 class Node(object):
     def __init__(self,name,task,identifier = None):
         self.identifier = identifier if identifier else str(uuid.uuid1())
-        self.identifier = identifier
         self.name = name
         self.submit_time = None
         self.ready_by_time = None
