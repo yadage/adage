@@ -91,7 +91,7 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
     if not workdir:
         workdir = os.getcwd()
 
-    trackerlist = [trackers.SimpleReportTracker(log)]
+    trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     
     if track:
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]

@@ -61,13 +61,19 @@ class TextSnapShotTracker(object):
             logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
         
 class SimpleReportTracker(object):
-    def __init__(self,log):
+    def __init__(self,log,mindelta):
         self.log = log
+        self.mindelta = mindelta
+        self.last_update = None
+        
     def initialize(self,dag):
         pass
 
     def track(self,dag):
-        self.update(dag)
+        now = time.time()
+        if not self.last_update or (now-self.last_update) > self.mindelta:
+            self.last_update = now
+            self.update(dag)
     
     def finalize(self,dag):
         self.update(dag)
