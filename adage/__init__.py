@@ -101,14 +101,14 @@ def rundag(dag,rules, track = False, backend = None, loggername = None, workdir 
     #while we have nodes that can be submitted
 
     try:
-      while nodes_left_or_rule(dag,rules):
-          update_dag(dag,rules)
-          process_dag(backend,dag,rules)
-          for t in trackerlist: t.track(dag)
-          time.sleep(1)
+        while nodes_left_or_rule(dag,rules):
+            update_dag(dag,rules)
+            process_dag(backend,dag,rules)
+            for t in trackerlist: t.track(dag)
+            time.sleep(1)
     except:
-      log.error('some weird exception caught in adage process loop')
-      raise  
+        log.exception('some weird exception caught in adage process loop')
+        raise  
 
     log.info('all running jobs are finished.')
     
