@@ -65,9 +65,14 @@ class SimpleReportTracker(object):
         self.log = log
     def initialize(self,dag):
         pass
+
     def track(self,dag):
-        pass
+        self.update(dag)
+    
     def finalize(self,dag):
+        self.update(dag)
+
+    def update(self,dag):
         successful, failed, notrun = 0,0,0
         for node in dag.nodes():
             nodeobj = dag.getNode(node)

@@ -1,6 +1,8 @@
 import nodestate
 import time
+import logging
 
+log = logging.getLogger(__name__)
 
 class Node(object):
     def __init__(self,identifier,name,task):
@@ -78,6 +80,7 @@ class Node(object):
             return False
         if not self.ready_by_time:
             self.ready_by_time = time.time()
+            log.info('node finished %s finished',self)
         return True
 
     def result_of(self):
