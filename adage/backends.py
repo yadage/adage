@@ -5,18 +5,23 @@ import traceback
 class MultiProcBackend(object):
     def __init__(self,poolsize):
         self.pool = multiprocessing.Pool(poolsize)
+
     def submit(self,task):
         return self.pool.apply_async(task)
-    def result_of(self,result):
-        return result.get()
-    def ready(self,result):
-        return result.ready()
-    def successful(self,result):
-        if not self.ready(result): return False
-        return result.successful()
-    def fail_info(self,result):
+
+    def result(self,resultproxy):
+        return resultproxy.get()
+
+    def ready(self,resultproxy):
+        return resultproxy.ready()
+
+    def successful(self,resultproxy):
+        if not self.ready(resultproxy): return False
+        return resultproxy.successful()
+
+    def fail_info(self,resultproxy):
         try:
-            self.result_of(result)
+            self.result(resultproxy)
         except:
             t,v,tb =    sys.exc_info()
             traceback.print_tb(tb)
@@ -28,15 +33,19 @@ class CeleryBackend(object):
     def submit(self,task):
         self.app.set_current()
         return task.func.celery.apply_async(task.args,task.kwargs,throw = False)
-    def result_of(self,result):
-        return result.get()
-    def ready(self,result):
-        return result.ready()
-    def successful(self,result):
-        return result.successful()
-    def fail_info(self,result):
+
+    def result(self,resultproxy):
+        return resultproxy.get()
+
+    def ready(self,resultproxy):
+        return resultproxy.ready()
+
+    def successful(self,resultproxy):
+        return resultproxy.successful()
+
+    def fail_info(self,resultproxy):
         try:
-            self.result_of(result)
+            self.result(resultproxy)
         except:
             return sys.exc_info()
         
@@ -48,11 +57,14 @@ class DummyBackend(object):
         if task:
             pass
         return DummyResult()
-    def result_of(self,*unused):
+    def result(self,resultproxy):
         return None
-    def ready(self,*unused):
+    
+    def ready(self,resultproxy):
         return True
-    def successful(self,*unused):
+    
+    def successful(self,resultproxy):
         return False
-    def fail_info(self,*unused):
+    
+    def fail_info(self,resultproxy):
         return 'cannot give reason :( '

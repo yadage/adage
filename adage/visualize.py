@@ -1,48 +1,47 @@
 import networkx as nx
-import dagstate
 import subprocess
 import nodestate
 import datetime
 
-def node_visible(node,time,start,stop):
-    norm_node_time = (node.define_time-start)/(stop-start)
-    return norm_node_time < time    
+def node_visible(nodeobj,time):
+    return time > nodeobj.define_time 
+
+def state_at_time(nodeobj,time):
+    defined    = nodeobj.define_time 
+    submitted  = nodeobj.submit_time
+    ready_by   = nodeobj.ready_by_time 
+    if time < defined:
+        return None
+    if defined <= time < submitted:
+        return nodestate.DEFINED
+    if submitted <= time < ready_by:
+        return nodestate.RUNNING
+    if ready_by <= time:
+        return nodeobj.state
 
 def colorize_graph(dag,normtime = None):
     colorized = nx.DiGraph()
     allnodes = dag.nodes()
-    starttimes = [dag.getNode(n).define_time for n in allnodes]
-    stoptimes  = [dag.getNode(n).ready_by_time for n in allnodes]
-    start,stop = min(starttimes),max(stoptimes)
+    start = min([dag.getNode(n).define_time for n in allnodes])
+    stop  = max([dag.getNode(n).ready_by_time for n in allnodes])
 
-    # print "total delta: {}".format(stop-start)
+    time = start + normtime*(stop-start)
+
+    colorkey = {
+        None : None,
+        nodestate.DEFINED : 'grey',
+        nodestate.RUNNING : 'yellow',
+        nodestate.FAILED  : 'red',
+        nodestate.SUCCESS : 'green'
+    }
+
     for node in dag.nodes():
         nodeobj = dag.getNode(node)
         
-        time = start + normtime*(stop-start)
-
-        # joblength = nodeobj.ready_by_time-nodeobj.submit_time
-        # print 'joblength: {} {}'.format(nodeobj.name,joblength)
-
-        color = None
-        if dagstate.upstream_failure(dag,nodeobj):
-            color = 'blue'
-        if start <= time < nodeobj.submit_time:
-            color = 'grey'
-        if nodeobj.submit_time <= time < nodeobj.ready_by_time:
-            color = 'yellow'
-        if nodeobj.ready_by_time <= time <= stop:
-            if nodeobj.state()==nodestate.FAILED:
-                color = 'red'
-            if nodeobj.state()==nodestate.SUCCESS:
-                color = 'green'
-
+        state   = state_at_time(nodeobj,time)
+        color   = colorkey[state]
+        visible = node_visible(nodeobj,time)
         
-        visible = node_visible(nodeobj,normtime,start,stop)
-        # hmtimes = [start,nodeobj.submit_time,nodeobj.ready_by_time,stop]
-        # hmnormes = [(t-start)/(stop-start) for t in hmtimes]
-        # print 'times: {} {} {} {}'.format(normtime,hmnormes,color,visible)
-
         style = 'filled' if visible else 'invis'
         dot_attr = {'label':'{} '.format(nodeobj.name), 'style':style, 'color': color}
 
@@ -50,11 +49,10 @@ def colorize_graph(dag,normtime = None):
         for pre in dag.predecessors(node):
             colorized.add_edge(pre,node)
     
-    # print '------------'
     dotformat = nx.drawing.nx_pydot.to_pydot(colorized)
     dotformat.set_label(datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S'))
     for e in dotformat.get_edges():
-        edge_visible =  node_visible(dag.getNode(e.get_destination().replace('"','')),normtime,start,stop)
+        edge_visible =  node_visible(dag.getNode(e.get_destination().replace('"','')),time)
         if not edge_visible:
             e.set_style('invis')
     return dotformat

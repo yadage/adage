@@ -1,33 +1,16 @@
-def qualifiedname(thing):
-    if thing.__module__ != '__main__':
-        return '{}.{}'.format(thing.__module__,thing.__name__)
-    else:
-        return thing.__name__
+import functools
 
-
-class Functor(object):
-    def __init__(self,func):
-        self.qualname = qualifiedname(func)
-        self.func = func
-        self.args = None
-        self.kwargs = None
-    
-    def __call__(self,dag):
-        updated = self.kwargs.copy()
-        updated.update(dag = dag)
-        return self.func(*self.args,**updated)
-
-    def setargs(self,*args,**kwargs):
-        self.args = args
-        self.kwargs = kwargs
-        return self
-
-def functorize(func):
-    def sig(*args,**kwargs):
-        instance = Functor(func)
-        instance.setargs(*args,**kwargs)
-        return instance
-    func.s = sig
+def adageop(func):
+    """
+    Decorator that adds a 's' attribute to a function
+    The attribute can be used to partially define
+    the function call, except for the 'adageobj'
+    keyword argument, the return value is a
+    single-argument ('adageobj') function
+    """
+    def partial(*args,**kwargs):
+        return functools.partial(func,*args,**kwargs)
+    func.s = partial
     return func
     
 class Rule(object):
@@ -35,44 +18,46 @@ class Rule(object):
         self.predicate = predicate
         self.body = body
 
-    def applicable(self,dag):
-        return self.predicate(dag)
+    def applicable(self,adageobj):
+        return self.predicate(adageobj)
 
-    def apply(self,dag):
-        return self.body(dag)
-    
-class DelayedCallable(object):
-    def __init__(self,func):
-        self.qualname = qualifiedname(func)
-        self.func = func
-        self.args = None
-        self.kwargs = None
-        
-    def __repr__(self):
-        return '<Delayed: {}>'.format(self.func)
-        
-    def __call__(self):
-        assert self.kwargs is not None
-        assert self.args is not None
-        return self.func(*self.args,**self.kwargs)
-
-    def setargs(self,*args,**kwargs):
-        self.args = args
-        self.kwargs = kwargs
-        return self
+    def apply(self,adageobj):
+        return self.body(adageobj)
 
 def adagetask(func):
+    """
+    Decorator that adds a 's' attribute to a function
+    The attribute can be used to fully define a function
+    call to be executed at a later time. The result
+    will be a zero-argument callable
+    """
     try:
         from celery import shared_task
         func.celery = shared_task(func)
     except ImportError:
         pass        
 
-    def sig(*args,**kwargs):
-        instance = DelayedCallable(func)
-        instance.setargs(*args,**kwargs)
-        return instance
-    func.s = sig
+    def partial(*args,**kwargs):
+        return functools.partial(func,*args,**kwargs)
+    func.s = partial
     return func
-
-
+    
+def callbackrule(after = None):
+    """
+    A decorator that creates a adage Rule from a callback function
+    The after argument is expected to container a dictionary
+    of node identifiers. The callback is expected have two arguments
+    A dictionary with the same keys as in after as keys, and the 
+    corresponding nodes as values, as well as the adajeobj will be
+    passed to the callback
+    """
+    after = after or {}
+    def decorator(func):
+        def predicate(adageobj):
+            return all([adageobj.dag.getNode(node).successful() for node in after.values()])
+        def body(adageobj):
+            depnodes = {k:adageobj.dag.getNode(v) for k,v in after.iteritems()}
+            func(depnodes = depnodes, adageobj = adageobj)
+            
+        return Rule(predicate,body)
+    return decorator

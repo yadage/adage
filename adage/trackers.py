@@ -3,7 +3,8 @@ import os
 import shutil
 import subprocess
 import dagstate
-import datetime        
+import nodestate
+from datetime  import datetime
 import networkx as nx
 import adage.visualize as viz
 
@@ -13,18 +14,18 @@ class GifTracker(object):
         self.workdir = workdir
         self.frames = frames
         
-    def initialize(self,dag):
+    def initialize(self,adageobj):
         pass
         
-    def track(self,dag):
+    def track(self,adageobj):
         pass
         
-    def finalize(self,dag):
+    def finalize(self,adageobj):
         if os.path.exists(self.workdir):
             shutil.rmtree(self.workdir)
         os.makedirs(self.workdir)
         for i in range(self.frames+1):
-            viz.print_dag(dag,'dag_{:02}'.format(i),self.workdir,time = i/float(self.frames))
+            viz.print_dag(adageobj.dag,'dag_{:02}'.format(i),self.workdir,time = i/float(self.frames))
         subprocess.call('convert -delay 50 $(ls {}/*.png|sort) {}'.format(self.workdir,self.gifname),shell = True)
         shutil.rmtree(self.workdir)
                 
@@ -34,30 +35,37 @@ class TextSnapShotTracker(object):
         self.mindelta = mindelta
         self.last_update = None
 
-    def initialize(self,dag):
+    def initialize(self,adageobj):
         if not os.path.exists(os.path.dirname(self.logfilename)):
             os.makedirs(os.path.dirname(self.logfilename))
         with open(self.logfilename,'w') as logfile:
-            timenow = datetime.datetime.now().isoformat()
+            timenow = datetime.now().isoformat()
             logfile.write('========== ADAGE LOG BEGIN at {} ==========\n'.format(timenow))
-        self.update(dag)
+        self.update(adageobj)
 
-    def track(self,dag):
+    def track(self,adageobj):
         now = time.time()
         if not self.last_update or (now-self.last_update) > self.mindelta:
             self.last_update = now
-            self.update(dag)
+            self.update(adageobj)
 
-    def update(self,dag):
+    def update(self,adageobj):
+        dag = adageobj.dag
         with open(self.logfilename,'a') as logfile:
-            logfile.write('---------- snapshot at {}\n'.format(datetime.datetime.now().isoformat()))
+            logfile.write('---------- snapshot at {}\n'.format(datetime.now().isoformat()))
             for node in nx.topological_sort(dag):
                 nodeobj = dag.getNode(node)
-                logfile.write('name: {} obj: {} submitted: {}\n'.format(nodeobj.name,nodeobj,nodeobj.submitted))
-    def finalize(self,dag):
+                submitted = nodeobj.submit_time is not None
+                logfile.write('name: {} obj: {} submitted: {}\n'.format(
+                        nodeobj.name,
+                        nodeobj,
+                        submitted
+                    )
+                )
+    def finalize(self,adageobj):
         with open(self.logfilename,'a') as logfile:
-            self.update(dag)
-            timenow = datetime.datetime.now().isoformat()
+            self.update(adageobj)
+            timenow = datetime.now().isoformat()
             logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
         
 class SimpleReportTracker(object):
@@ -66,28 +74,32 @@ class SimpleReportTracker(object):
         self.mindelta = mindelta
         self.last_update = None
         
-    def initialize(self,dag):
+    def initialize(self,adageobj):
         pass
 
-    def track(self,dag):
+    def track(self,adageobj):
         now = time.time()
         if not self.last_update or (now-self.last_update) > self.mindelta:
             self.last_update = now
-            self.update(dag)
+            self.update(adageobj)
     
-    def finalize(self,dag):
-        self.update(dag)
+    def finalize(self,adageobj):
+        self.update(adageobj)
 
-    def update(self,dag):
-        successful, failed, notrun = 0,0,0
+    def update(self,adageobj):
+        dag, rules = adageobj.dag, adageobj.rules
+        successful, failed, running, notrun = 0, 0, 0, 0
         for node in dag.nodes():
             nodeobj = dag.getNode(node)
+            if nodeobj.state == nodestate.RUNNING:
+                running += 1
             if dagstate.node_status(nodeobj):
                 successful+=1
             if dagstate.node_ran_and_failed(nodeobj):
                 failed+=1
-                self.log.error("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.result)))
+                self.log.error("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.resultproxy)))
             if dagstate.upstream_failure(dag,nodeobj):
                 notrun+=1
-        self.log.info('successful: {} | failed: {} | notrun: {} | total: {}'.format(successful,failed,notrun,len(dag.nodes())))
+        self.log.info('successful: {} | failed: {} | running: {}| notrun: {} | total: {} | rules: {}'.format(
+            successful,failed,running,notrun,len(dag.nodes()),len(rules)))
         
