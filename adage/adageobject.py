@@ -1,4 +1,3 @@
-import adage
 import adage.graph
 
 class adageobject(object):
