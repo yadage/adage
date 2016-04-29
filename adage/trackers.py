@@ -1,12 +1,45 @@
 import time
 import os
 import shutil
+import json
 import subprocess
 import dagstate
 import nodestate
 from datetime  import datetime
 import networkx as nx
 import adage.visualize as viz
+
+class JSONDumpTracker(object):
+    def __init__(self,dumpname):
+        self.dumpname = dumpname
+
+    def initialize(self,adageobj):
+        pass
+        
+    def track(self,adageobj):
+        pass
+    
+    def finalize(self,adageobj):
+        dag, rules = adageobj.dag, adageobj.rules
+        data = {'dag':None, 'rules':None}
+
+        data['dag'] = {'nodes':[]}
+        for node in nx.topological_sort(dag):
+            nodeobj = dag.getNode(node)
+            nodeinfo = {
+                'id':nodeobj.identifier,
+                'name':nodeobj.name,
+                'dependencies':dag.predecessors(nodeobj.identifier),
+                'state':str(nodeobj.state),
+                'timestamps':{
+                    'defined': nodeobj.define_time,
+                    'submit': nodeobj.submit_time,
+                    'ready by': nodeobj.ready_by_time
+                }
+            }
+            data['dag']['nodes']+=[nodeinfo]
+        with open(self.dumpname,'w') as dumpfile:
+            json.dump(data,dumpfile)
 
 class GifTracker(object):
     def __init__(self,gifname,workdir,frames = 20):
@@ -67,6 +100,7 @@ class TextSnapShotTracker(object):
             self.update(adageobj)
             timenow = datetime.now().isoformat()
             logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
+
         
 class SimpleReportTracker(object):
     def __init__(self,log,mindelta):
