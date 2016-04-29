@@ -74,36 +74,54 @@ def process_dag(backend,adageobj):
 def trackprogress(trackerlist,adageobj):
     map(lambda t: t.track(adageobj), trackerlist)
     
+    
+def adage_coroutine(backend):
+    """the main loop as a coroutine, for sequential stepping"""    
+    # after priming the coroutin, we yield right away until we get send a state object
+    state = yield
+
+    # after receiving the state object, we yield and will start the loop once we regain controls
+    yield
+
+    #starting the loop
+    while nodes_left_or_rule(state):
+        update_dag(state)
+        process_dag(backend,state)
+
+        #we're done for this tick, let others proceed
+        yield state
+    
 def rundag(adageobj, track = False, backend = None, loggername = None, workdir = os.getcwd(), trackevery = 1, update_interval = 0.01):
     if loggername:
         global log
         log = logging.getLogger(loggername)
-    
+
     ## funny behavior of multiprocessing Pools means that
     ## we can not have backendsubmit = multiprocsetup(2)    in the function sig
     ## so we only initialize them here
     if not backend:
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
-    
+
     trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     if track:
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
         trackerlist += [trackers.JSONDumpTracker(dumpname = '{}/adage.json'.format(workdir))]
 
-        
+
     map(lambda t: t.initialize(adageobj), trackerlist)
-    
+
+    coroutine = adage_coroutine(backend)
+    coroutine.next()
+    coroutine.send(adageobj)
     try:
-        while nodes_left_or_rule(adageobj):
-            update_dag(adageobj)
-            process_dag(backend,adageobj)
-            trackprogress(trackerlist,adageobj)
+        for state in coroutine:
+            trackprogress(trackerlist,state)
             time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
-        raise  
+        raise
     finally:
         for node in adageobj.dag.nodes():
             #check node status one last time so we pick up the finishing times
@@ -123,7 +141,7 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
         log.error('DAG execution not validating')
         raise RuntimeError('DAG execution not validating')
     log.info('execution valid. (in terms of execution order)')
-    
+
     if any(adageobj.dag.getNode(x).state == nodestate.FAILED for x in adageobj.dag.nodes()):
         log.error('raising RunTimeError due to failed jobs')
         raise RuntimeError('DAG execution failed')
