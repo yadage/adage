@@ -23,6 +23,7 @@ class JSONDumpTracker(object):
         dag, rules = adageobj.dag, adageobj.rules
         data = {'dag':None, 'rules':None}
 
+        data['rules'] = {'nrules':len(rules)}
         data['dag'] = {'nodes':[]}
         for node in nx.topological_sort(dag):
             nodeobj = dag.getNode(node)

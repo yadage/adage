@@ -71,30 +71,38 @@ def process_dag(backend,adageobj):
         if dagstate.upstream_failure(dag,nodeobj):
             log.debug('not submitting node: %s due to upstream failure',node)
 
+def update_state(adageobj):
+    for node in adageobj.dag.nodes():
+        #check node status one last time so we pick up the finishing times
+        dagstate.node_status(adageobj.dag.getNode(node))
+
 def trackprogress(trackerlist,adageobj):
     map(lambda t: t.track(adageobj), trackerlist)
-    
     
 def adage_coroutine(backend):
     """the main loop as a coroutine, for sequential stepping"""    
     # after priming the coroutin, we yield right away until we get send a state object
     state = yield
-
+    
     # after receiving the state object, we yield and will start the loop once we regain controls
     yield
-
+    
     #starting the loop
     while nodes_left_or_rule(state):
         update_dag(state)
         process_dag(backend,state)
-
+        update_state(state)
+        
         #we're done for this tick, let others proceed
         yield state
     
-def rundag(adageobj, track = False, backend = None, loggername = None, workdir = os.getcwd(), trackevery = 1, update_interval = 0.01):
+def rundag(adageobj, track = False, backend = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
     if loggername:
         global log
         log = logging.getLogger(loggername)
+
+    if not workdir:
+        workdir = os.getcwd()
 
     ## funny behavior of multiprocessing Pools means that
     ## we can not have backendsubmit = multiprocsetup(2)    in the function sig
@@ -102,19 +110,20 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
     if not backend:
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
-
+    
     trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     if track:
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
         trackerlist += [trackers.JSONDumpTracker(dumpname = '{}/adage.json'.format(workdir))]
-
-
+    
+    
     map(lambda t: t.initialize(adageobj), trackerlist)
-
+    
     coroutine = adage_coroutine(backend)
     coroutine.next()
     coroutine.send(adageobj)
+    
     try:
         for state in coroutine:
             trackprogress(trackerlist,state)
@@ -122,26 +131,22 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
     except:
         log.exception('some weird exception caught in adage process loop')
         raise
-    finally:
-        for node in adageobj.dag.nodes():
-            #check node status one last time so we pick up the finishing times
-            dagstate.node_status(adageobj.dag.getNode(node))
-
+    
     if adageobj.rules:
         log.warning('some rules were not applied.')
-
+        
     log.info('all running jobs are finished.')
     log.info('track last time')
-
+    
     map(lambda t: t.finalize(adageobj), trackerlist)
-
+    
     log.info('validating execution')
-
+    
     if not validate_finished_dag(adageobj.dag):
         log.error('DAG execution not validating')
         raise RuntimeError('DAG execution not validating')
     log.info('execution valid. (in terms of execution order)')
-
+    
     if any(adageobj.dag.getNode(x).state == nodestate.FAILED for x in adageobj.dag.nodes()):
         log.error('raising RunTimeError due to failed jobs')
         raise RuntimeError('DAG execution failed')
