@@ -117,7 +117,6 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
         trackerlist += [trackers.JSONDumpTracker(dumpname = '{}/adage.json'.format(workdir))]
     
-    
     map(lambda t: t.initialize(adageobj), trackerlist)
     
     coroutine = adage_coroutine(backend)
