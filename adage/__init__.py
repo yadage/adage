@@ -131,6 +131,7 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
     try:
         for state in coroutine:
             trackprogress(trackerlist,state)
+            time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
         raise
