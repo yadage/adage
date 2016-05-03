@@ -46,15 +46,18 @@ def nodes_left_or_rule(adageobj):
 
 def update_dag(adageobj):
     #iterate rules in reverse so we can safely pop items
+    anyapplied = False
     for i,rule in reversed([x for x in enumerate(adageobj.rules)]):
         if rule.applicable(adageobj):
             log.info('extending graph.')
             rule.apply(adageobj)
             adageobj.rules.pop(i)
-            #we changed the state so let's just recurse
-            #update_dag(adageobj)
+            anyapplied = True
         else:
             log.debug('rule not ready yet')
+
+    #we changed the state so let's just recurse
+    if anyapplied: update_dag(adageobj)
 
 def process_dag(backend,adageobj):
     dag = adageobj.dag
@@ -124,11 +127,10 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
     coroutine = adage_coroutine(backend)
     coroutine.next()
     coroutine.send(adageobj)
-    
+
     try:
         for state in coroutine:
             trackprogress(trackerlist,state)
-            time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
         raise
