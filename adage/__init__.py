@@ -51,6 +51,8 @@ def update_dag(adageobj):
             log.info('extending graph.')
             rule.apply(adageobj)
             adageobj.rules.pop(i)
+            #we changed the state so let's just recurse
+            update_dag(adageobj)
         else:
             log.debug('rule not ready yet')
 
