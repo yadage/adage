@@ -23,22 +23,22 @@ def schedule_pythia(adageobj):
     lhefiles = download_node.result
 
     #let's run pythia on these LHE files
-    pythia_nodes = [adageobj.dag.addTask(pythia.s(lhefilename = lhe), depends_on = [download_node]) for lhe in lhefiles]
+    pythia_nodes = [adageobj.dag.addTask(pythia.s(lhefilename = lhe),nodename = 'pythia', depends_on = [download_node]) for lhe in lhefiles]
 
     # we already know what the pythia result will look like so we don't need to wait for the nodes to run
     # to schedule them
     hepmcfiles        = [x.rsplit('.lhe')[0]+'.hepmc' for x in lhefiles]
 
-    adageobj.dag.addTask(mcviz.s(hepmcfile = hepmcfiles[0]), depends_on = pythia_nodes[0:1])
+    adageobj.dag.addTask(mcviz.s(hepmcfile = hepmcfiles[0]),nodename = 'mcviz',  depends_on = pythia_nodes[0:1])
 
     #Rivet and then produce some plots.
-    rivet_node        = adageobj.dag.addTask(rivet.s(workdir = 'here', hepmcfiles = hepmcfiles), depends_on = pythia_nodes)
-    adageobj.dag.addTask(plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'), depends_on = [rivet_node])
+    rivet_node        = adageobj.dag.addTask(rivet.s(workdir = 'here', hepmcfiles = hepmcfiles), nodename = 'rivet', depends_on = pythia_nodes)
+    adageobj.dag.addTask(plotting.s(workdir = 'here', yodafile = 'Rivet.yoda'),nodename = 'plotting', depends_on = [rivet_node])
         
 def build_initial_dag():
     adageobj = adage.adageobject()
 
-    prepare_node    = adageobj.dag.addTask(prepare.s(workdir = 'here'))
+    prepare_node    = adageobj.dag.addTask(prepare.s(workdir = 'here'), nodename = 'prepare')
     adageobj.dag.addTask(download.s(workdir = 'here'), depends_on = [prepare_node], nodename = 'download')
 
     #possible syntax that could be nice using partial function execution
