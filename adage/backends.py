@@ -49,14 +49,15 @@ class CeleryBackend(object):
         except:
             return sys.exc_info()
         
-class DummyResult(object):        
+class DummyResultProxy(object):        
     pass
     
 class DummyBackend(object):
     def submit(self,task):
         if task:
             pass
-        return DummyResult()
+        return DummyResultProxy()
+
     def result(self,resultproxy):
         return None
     
