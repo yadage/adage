@@ -52,7 +52,7 @@ def update_dag(adageobj):
             rule.apply(adageobj)
             adageobj.rules.pop(i)
             #we changed the state so let's just recurse
-            update_dag(adageobj)
+            #update_dag(adageobj)
         else:
             log.debug('rule not ready yet')
 
