@@ -51,7 +51,7 @@ def update_dag(adageobj):
         if rule.applicable(adageobj):
             log.info('extending graph.')
             rule.apply(adageobj)
-            adageobj.rules.pop(i)
+            adageobj.applied_rules.append(adageobj.rules.pop(i))
             anyapplied = True
         else:
             log.debug('rule not ready yet')
