@@ -52,7 +52,6 @@ def update_coroutine(adageobj):
                 log.info('extending graph.')
                 rule.apply(adageobj)
                 adageobj.applied_rules.append(adageobj.rules.pop(i))
-                anyapplied = True
             yield
         else:
             log.debug('rule not ready yet')
