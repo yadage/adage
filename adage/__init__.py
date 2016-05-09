@@ -44,20 +44,34 @@ def nodes_left_or_rule(adageobj):
         log.info('no nodes can be run anymore')
         return False
 
-def update_dag(adageobj):
-    #iterate rules in reverse so we can safely pop items
-    anyapplied = False
+def update_coroutine(adageobj):
     for i,rule in reversed([x for x in enumerate(adageobj.rules)]):
         if rule.applicable(adageobj):
-            log.info('extending graph.')
-            rule.apply(adageobj)
-            adageobj.applied_rules.append(adageobj.rules.pop(i))
-            anyapplied = True
+            do_apply = yield
+            if do_apply:
+                log.info('extending graph.')
+                rule.apply(adageobj)
+                adageobj.applied_rules.append(adageobj.rules.pop(i))
+                anyapplied = True
+            yield
         else:
             log.debug('rule not ready yet')
 
+def update_dag(adageobj,decider):
+    #iterate rules in reverse so we can safely pop items
+    anyapplied = False
+    update_loop = update_coroutine(adageobj)
+    for possible_update in update_loop:
+        log.debug('we could update this..')
+        command = decider.next()
+        if command:
+            log.debug('we are in fact updating this..')
+            anyapplied = True
+        update_loop.send(command)
     #we changed the state so let's just recurse
-    if anyapplied: update_dag(adageobj)
+    if anyapplied:
+        log.info('we applied a change, so we will recurse to see if we can apply anything else give updated state')
+        update_dag(adageobj,decider)
 
 def process_dag(backend,adageobj):
     dag = adageobj.dag
@@ -84,7 +98,7 @@ def update_state(adageobj):
 def trackprogress(trackerlist,adageobj):
     map(lambda t: t.track(adageobj), trackerlist)
     
-def adage_coroutine(backend):
+def adage_coroutine(backend,decider):
     """the main loop as a coroutine, for sequential stepping"""    
     # after priming the coroutin, we yield right away until we get send a state object
     state = yield
@@ -94,13 +108,19 @@ def adage_coroutine(backend):
     
     #starting the loop
     while nodes_left_or_rule(state):
-        update_dag(state)
+        update_dag(state,decider)
         process_dag(backend,state)
         update_state(state)
         
         #we're done for this tick, let others proceed
         yield state
-    
+
+
+def yes_man():
+    while True:
+        log.debug('got asked whether to apply rule or no, say Yes')
+        yield True
+
 def rundag(adageobj, track = False, backend = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
     if loggername:
         global log
@@ -124,7 +144,7 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
     
     map(lambda t: t.initialize(adageobj), trackerlist)
     
-    coroutine = adage_coroutine(backend)
+    coroutine = adage_coroutine(backend,yes_man())
     coroutine.next()
     coroutine.send(adageobj)
 
