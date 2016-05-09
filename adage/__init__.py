@@ -121,7 +121,7 @@ def yes_man():
         log.debug('got asked whether to apply rule or no, say Yes')
         yield True
 
-def rundag(adageobj, track = False, backend = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
+def rundag(adageobj, track = False, backend = None, decider = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
     if loggername:
         global log
         log = logging.getLogger(loggername)
@@ -136,6 +136,9 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
     
+    if not decider:
+        decider = yes_man()
+    
     trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     if track:
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
@@ -144,7 +147,7 @@ def rundag(adageobj, track = False, backend = None, loggername = None, workdir =
     
     map(lambda t: t.initialize(adageobj), trackerlist)
     
-    coroutine = adage_coroutine(backend,yes_man())
+    coroutine = adage_coroutine(backend,decider)
     coroutine.next()
     coroutine.send(adageobj)
 
