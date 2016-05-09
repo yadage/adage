@@ -27,7 +27,7 @@ def validate_finished_dag(dag):
                 return False
     return True
 
-def nodes_left_or_rule(adageobj):
+def nodes_left_or_rule_applicable(adageobj):
     dag,rules = adageobj.dag, adageobj.rules
     nodes_we_could_run = [node for node in dag.nodes() if not dagstate.upstream_failure(dag,dag.getNode(node))]
     nodes_running_or_defined = [x for x in nodes_we_could_run if dagstate.node_defined_or_waiting(dag.getNode(x))]
@@ -106,14 +106,13 @@ def adage_coroutine(backend,decider):
     yield
     
     #starting the loop
-    while nodes_left_or_rule(state):
+    while nodes_left_or_rule_applicable(state):
         update_dag(state,decider)
         process_dag(backend,state)
         update_state(state)
         
         #we're done for this tick, let others proceed
         yield state
-
 
 def yes_man():
     while True:
