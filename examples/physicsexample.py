@@ -7,7 +7,7 @@ from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
 
 import logging
 logging.basicConfig(level=logging.INFO)
-
+log = logging.getLogger(__name__)
 @adageop
 def download_done(adageobj):
     #we can only run pythia once the donwload is done and we know hoe many LHE files we have
@@ -46,10 +46,15 @@ def build_initial_dag():
 
     adageobj.rules = [ Rule(download_done.s(), schedule_pythia.s()) ]
     return adageobj
+
+def talkative_decider():
+    while True:
+        log.info('hello, we are being asked for an opinion, whether to apply a rule, we will say yes')
+        yield True
     
 def main():
     adageobj = build_initial_dag()
-    adage.rundag(adageobj, track = True, trackevery = 5)
+    adage.rundag(adageobj, track = True, trackevery = 5, decider = talkative_decider())
 
 if __name__=='__main__':
     main()

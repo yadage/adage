@@ -136,5 +136,5 @@ class SimpleReportTracker(object):
             if dagstate.upstream_failure(dag,nodeobj):
                 notrun+=1
         self.log.info('successful: {} | failed: {} | running: {}| notrun: {} | total: {} | open rules: {} | applied rules: {}'.format(
-            successful,failed,running,notrun,len(dag.nodes()),len(rules),len(adageobj.applied_rules)))
+            successful,failed,running,notrun,len(dag.nodes()),len(rules),len(applied)))
         
