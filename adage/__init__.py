@@ -62,7 +62,7 @@ def update_dag(adageobj,decider):
     update_loop = update_coroutine(adageobj)
     for possible_update in update_loop:
         log.debug('we could update this..')
-        command = decider.next()
+        command = decider.send(adageobj)
         if command:
             log.debug('we are in fact updating this..')
             anyapplied = True
@@ -115,9 +115,13 @@ def adage_coroutine(backend,decider):
         yield state
 
 def yes_man():
+    log.debug('ok we started and are now waiting for our first data')
+    data = yield
     while True:
-        log.debug('got asked whether to apply rule or no, say Yes')
-        yield True
+        log.debug('we received some new data: %s and we will make a decision now',data)
+        value = True
+        log.debug('ok.. decision reached.. yielding with this decision %s',value)
+        data = yield value
 
 def rundag(adageobj, track = False, backend = None, decider = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
     if loggername:
@@ -136,6 +140,7 @@ def rundag(adageobj, track = False, backend = None, decider = None, loggername =
     
     if not decider:
         decider = yes_man()
+        decider.next() #prime it..
     
     trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     if track:

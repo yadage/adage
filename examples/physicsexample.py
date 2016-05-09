@@ -48,13 +48,19 @@ def build_initial_dag():
     return adageobj
 
 def talkative_decider():
+    log.info('ok we started and are now waiting for our first data')
+    data = yield
     while True:
-        log.info('hello, we are being asked for an opinion, whether to apply a rule, we will say yes')
-        yield True
+        log.info('we received some new data: %s and we will make a decision now',data)
+        value = True
+        log.info('ok.. decision reached.. yielding with this decision %s',value)
+        data = yield value
     
 def main():
     adageobj = build_initial_dag()
-    adage.rundag(adageobj, track = True, trackevery = 5, decider = talkative_decider())
+    t = talkative_decider()
+    t.next()
+    adage.rundag(adageobj, track = True, trackevery = 5, decider = t)
 
 if __name__=='__main__':
     main()
