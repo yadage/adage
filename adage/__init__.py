@@ -118,12 +118,11 @@ def yes_man():
     # we yield until we receive some data via send()
     data = yield
     while True:
-        log.info('got data %s',data)
         value = True
         #we yield True and wait to receive some data
         data = yield value
 
-def rundag(adageobj, track = False, backend = None, decider = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
+def rundag(adageobj, track = False, backend = None, decider = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01, additional_trackers = None):
     if loggername:
         global log
         log = logging.getLogger(loggername)
@@ -147,12 +146,19 @@ def rundag(adageobj, track = False, backend = None, decider = None, loggername =
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
         trackerlist += [trackers.JSONDumpTracker(dumpname = '{}/adage.json'.format(workdir))]
+
+    if additional_trackers:
+        trackerlist += additional_trackers
     
     map(lambda t: t.initialize(adageobj), trackerlist)
-    
+
+    log.info('preparing adage coroutine.')
     coroutine = adage_coroutine(backend,decider)
     coroutine.next() #prime the coroutine....
     coroutine.send(adageobj)
+
+
+    log.info('starting state loop.')
 
     try:
         for state in coroutine:
