@@ -1,5 +1,5 @@
 import adage.backends
-from adage import adagetask, adageop ,Rule
+from adage import adagetask, adageop, Rule, adageobject
 import logging
 import time
 import os
@@ -8,51 +8,80 @@ import multiprocessing
 logging.basicConfig(level = logging.DEBUG)
 log = logging.getLogger(__name__)
 
-backenddata = {'some':'backend'}
-workflowdata = {'some':'workflowdata'}
+BACKENDDATA = None
+WORKFLOWDATA = None
 
 import pickle
+import uuid
 
+class StateInterface(object):
+    def __init__(self,statefile,initdata = None):
+        self.statefile = statefile
+        if initdata:
+            log.info('creating state using initial data')
+            self.commit(initdata)
+        
+    def get(self):
+        return pickle.load(open(self.statefile))
+        
+    def commit(self,data):
+        pickle.dump(data,open(self.statefile,'w'))
 
-print '------'
-pickle.dump(backenddata,open('bla.pickle','w'))
-backenddata = pickle.load(open('bla.pickle'))
-print backenddata
-print '------'
-
-@adagetask
-def atask(taskspec):
-    print 'executing: atask...',taskspec
-    import time
-    time.sleep(10)
-
-class CustomProxy(object):        
-    def __init__(self,task,proxy):
+def create_state(initbackend = None,initwflow = None):
+    global BACKENDDATA
+    global WORKFLOWDATA
+    BACKENDDATA  = StateInterface('backendstate.pickle',initbackend)
+    WORKFLOWDATA = StateInterface('workflowstate.pickle',initwflow)
+        
+class CustomProxy(object):
+    
+    @classmethod
+    def createNewProxy(cls,task):
+        proxyid = str(uuid.uuid1())
+        
+        instance = cls(proxyid,task)
+        x = BACKENDDATA.get()
+        x['proxies'][instance.identifier] = [instance.json()]
+        x['proxystate'][instance.identifier] = 'CREATED'
+        BACKENDDATA.commit(x)
+        return instance
+        
+    def json(self):
+        jsondata = {'type':'CustomProxy','task':self.task,'proxyid':self.identifier}
+        return jsondata
+        
+    def __init__(self,identifier,task):
+        self.identifier = identifier
         self.task = task
-        self.proxy = proxy
-        log.info('created proxy...')
+        log.info('created proxy with id %s',self.identifier)
         
     def ready(self):
-        return self.proxy.ready()
+        x = BACKENDDATA.get()
+        state = x['proxystate'][self.identifier]
+        log.info('ready state in external state: %s, ready: %s',state, state in ['SUCCESS','FAILED'])
+        return state in ['SUCCESS','FAILED']
     
     def successful(self):
-        return self.proxy.ready() and self.proxy.successful()
-
+        x = BACKENDDATA.get()
+        state = x['proxystate'][self.identifier]
+        log.info('ready state in external state: %s, sucess: %s',state, state in ['SUCCESS'])
+        return state in ['SUCCESS']
+        
     def result(self):
         if self.successful():
-            return self.proxy.get()
+            x = BACKENDDATA.get()
+            result = x['results'][self.identifier]
+            log.info('result in external state: %s',result)
+            return result
         return None
-    
-    
+
 class CustomBackend(object):
     def __init__(self):
-        self.pool = multiprocessing.Pool(1)
+        pass
 
     def submit(self,task):
         log.info('submitting task %s',task)
-        proxy = self.pool.apply_async(atask.s(taskspec = task))
-        log.info('submitted task %s',task)
-        return CustomProxy(task,proxy)
+        return CustomProxy.createNewProxy(task)
 
     def result(self,resultproxy):
         log.info('checking result')
@@ -69,6 +98,37 @@ class CustomBackend(object):
     def fail_info(self,resultproxy):
         return 'cannot give reason :( '
 
+class CustomState(object):
+    def __init__(self):
+        self.obj = adage.adageobject()
+
+    @property
+    def dag(self):
+        log.info('giving out DAG')
+        return self.obj.dag
+    
+    @property
+    def rules(self):
+        log.info('giving out open rules')
+        return self.obj.rules
+
+    @rules.setter
+    def rules(self,newrules):
+        log.info('giving out open rules')
+        self.obj.rules += newrules
+
+    @property
+    def applied_rules(self):
+        log.info('giving out applied rules')
+        return self.obj.applied_rules
+
+class CustomNode(adage.node.Node):
+    def __init__(self,task,nodename):
+        super(CustomNode,self).__init__(task = task, name = nodename)
+    
+    def __repr__(self):
+        return '<Custom Node: {}>'.format(self.name)
+
 class CustomRule(object):
     def __init__(self,predicate,body):
         self.pred = predicate
@@ -83,14 +143,23 @@ class CustomRule(object):
 def metapred(adageobj,rulespec):
     log.info('checking predicate',rulespec)
     if rulespec['type']=='byname':
-        value = adageobj.dag.getNodeByName(rulespec['name']) is not None
-        return value
+        node = adageobj.dag.getNodeByName(rulespec['name'])
+        if not node:
+            return False
+        return node.successful()
     elif rulespec['type']=='always':
         return True
 
 def metabody(adageobj,taskspec):
     log.info('applying body',taskspec)
-    adageobj.dag.addTask({'tasktype':taskspec['type']}, depends_on = [], nodename = taskspec['name'])
+    node = CustomNode(task = taskspec, nodename = taskspec['name'])
+    adageobj.dag.addNode(node , depends_on = [])
+
+@adagetask
+def atask(taskspec):
+    print 'executing: atask...',taskspec
+    import time
+    time.sleep(10)
 
 class CustomTracker(object):
     def initialize(self,adageobj):
@@ -103,10 +172,11 @@ class CustomTracker(object):
         log.info('finalizing tracker')
 
 def main():
-
+    
+    create_state({'proxies':{},'results':{},'proxystate':{}},{})
     backend = CustomBackend()
 
-    adageobj = adage.adageobject()
+    adageobj = CustomState()
     
     adageobj.rules = [
         CustomRule({'type':'always'}, {'type':'typeA', 'name': 'typeAnode'}),
@@ -115,9 +185,12 @@ def main():
     
     mytrack = CustomTracker()
     try:
-        adage.rundag(adageobj, backend = backend, track = True, additional_trackers = [mytrack], workdir = 'simpleTrack', update_interval = 10, trackevery = 10)
+        adage.rundag(adageobj, backend = backend, track = True, additional_trackers = [mytrack], workdir = 'simpleTrack', update_interval = 30, trackevery = 30)
     except RuntimeError:
         log.error('ERROR')
+
+    import IPython
+    IPython.embed()
 
 if __name__ == '__main__':
     main()
