@@ -135,6 +135,12 @@ class SimpleReportTracker(object):
                 self.log.error("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.resultproxy)))
             if dagstate.upstream_failure(dag,nodeobj):
                 notrun+=1
-        self.log.info('successful: {} | failed: {} | running: {}| notrun: {} | total: {} | open rules: {} | applied rules: {}'.format(
-            successful,failed,running,notrun,len(dag.nodes()),len(rules),len(applied)))
+        self.log.info('notrun: {notrun} | running: {running} | successful: {successful} | failed: {failed} | total: {total} | open rules: {rules} | applied rules: {applied}'.format(
+            successful = successful,
+            failed = failed,
+            running = running,
+            notrun = notrun,
+            total =  len(dag.nodes()),
+            rules = len(rules),
+            applied = len(applied)))
         

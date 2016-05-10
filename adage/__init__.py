@@ -151,7 +151,7 @@ def rundag(adageobj, track = False, backend = None, decider = None, loggername =
     map(lambda t: t.initialize(adageobj), trackerlist)
     
     coroutine = adage_coroutine(backend,decider)
-    coroutine.next()
+    coroutine.next() #prime the coroutine....
     coroutine.send(adageobj)
 
     try:
