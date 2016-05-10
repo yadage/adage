@@ -119,6 +119,7 @@ def yes_man():
     data = yield
     while True:
         value = True
+        log.debug('received data: %s',data)
         #we yield True and wait to receive some data
         data = yield value
 

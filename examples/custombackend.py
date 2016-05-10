@@ -8,7 +8,17 @@ import multiprocessing
 logging.basicConfig(level = logging.DEBUG)
 log = logging.getLogger(__name__)
 
-proxydatabase = {}
+backenddata = {'some':'backend'}
+workflowdata = {'some':'workflowdata'}
+
+import pickle
+
+
+print '------'
+pickle.dump(backenddata,open('bla.pickle','w'))
+backenddata = pickle.load(open('bla.pickle'))
+print backenddata
+print '------'
 
 @adagetask
 def atask(taskspec):
