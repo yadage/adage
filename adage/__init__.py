@@ -115,12 +115,11 @@ def adage_coroutine(backend,decider):
         yield state
 
 def yes_man():
-    log.debug('ok we started and are now waiting for our first data')
+    # we yield until we receive some data via send()
     data = yield
     while True:
-        log.debug('we received some new data: %s and we will make a decision now',data)
         value = True
-        log.debug('ok.. decision reached.. yielding with this decision %s',value)
+        #we yield True and wait to receive some data
         data = yield value
 
 def rundag(adageobj, track = False, backend = None, decider = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01):
