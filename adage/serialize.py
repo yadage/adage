@@ -29,22 +29,33 @@ def obj_to_json(adageobj):
         
     return data
 
-def node_to_json(dag,nodeobj):
+def noop_taskserializer(task):
+    return 'unserializable_task'
+
+def noop_proxyserializer(proxy):
+    return 'unserializable_proxy'
+
+def noop_ruleserializer(rule):
+    return 'unserializable_rule'
+
+def node_to_json(dag,nodeobj,taskserializer = noop_taskserializer, proxyserializer = noop_proxyserializer):
     nodeinfo = {
         'id':nodeobj.identifier,
         'name':nodeobj.name,
-        'dependencies':dag.predecessors(nodeobj.identifier),
-        'state':str(nodeobj.state),
+        'task':taskserializer(nodeobj.task),
+        
         'timestamps':{
             'defined': nodeobj.define_time,
             'submit': nodeobj.submit_time,
             'ready by': nodeobj.ready_by_time
-        }
+        },
+        
+        'state':str(nodeobj.state),
+        'proxy':proxyserializer(nodeobj.resultproxy),
+        'dependencies':dag.predecessors(nodeobj.identifier),
     }
     return nodeinfo
-    
-def rule_to_json(rule):
-    ruleinfo = {
-        'type':str(type(rule))
-    }
+
+def rule_to_json(rule, rule_serializer = noop_ruleserializer):
+    ruleinfo = rule_serializer(rule)
     return ruleinfo
