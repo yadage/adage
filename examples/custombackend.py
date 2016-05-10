@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 BACKENDDATA = None
 WORKFLOWDATA = None
 
-import pickle
+import json
 import uuid
 
 class StateInterface(object):
@@ -22,16 +22,16 @@ class StateInterface(object):
             self.commit(initdata)
         
     def get(self):
-        return pickle.load(open(self.statefile))
+        return json.load(open(self.statefile))
         
     def commit(self,data):
-        pickle.dump(data,open(self.statefile,'w'))
+        json.dump(data,open(self.statefile,'w'))
 
 def create_state(initbackend = None,initwflow = None):
     global BACKENDDATA
     global WORKFLOWDATA
-    BACKENDDATA  = StateInterface('backendstate.pickle',initbackend)
-    WORKFLOWDATA = StateInterface('workflowstate.pickle',initwflow)
+    BACKENDDATA  = StateInterface('backendstate.json',initbackend)
+    WORKFLOWDATA = StateInterface('workflowstate.json',initwflow)
         
 class CustomProxy(object):
     
