@@ -10,7 +10,8 @@ log = logging.getLogger(__name__)
 
 #dummy function to make stuff last randomly a bit longer
 def chill():
-    time.sleep(2+5*random.random())
+    time.sleep(0.01)
+    # time.sleep(2+5*random.random())
 
 @adagetask
 def prepare(workdir):

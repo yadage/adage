@@ -11,7 +11,8 @@ import adage.visualize as viz
 import adage.serialize as serialize
 
 class JSONDumpTracker(object):
-    def __init__(self,dumpname):
+    def __init__(self,dumpname, serializer = serialize.DefaultAdageEncoder):
+        self.serializer = serializer
         self.dumpname = dumpname
 
     def initialize(self,adageobj):
@@ -21,9 +22,8 @@ class JSONDumpTracker(object):
         pass
     
     def finalize(self,adageobj):
-        data = serialize.to_json(adageobj)
         with open(self.dumpname,'w') as dumpfile:
-            json.dump(data,dumpfile)
+            json.dump(adageobj,dumpfile, cls = self.serializer)
 
 class GifTracker(object):
     def __init__(self,gifname,workdir,frames = 20):
