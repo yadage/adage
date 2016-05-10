@@ -11,7 +11,7 @@ class DefaultAdageEncoder(json.JSONEncoder):
 
 def obj_to_json(adageobj):
     dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
-    data = {'dag':None, 'rules':None, 'applied rules':None}
+    data = {'dag':None, 'rules':None, 'applied':None}
     
     data['dag'] = {'nodes':[]}
     for node in nx.topological_sort(dag):
