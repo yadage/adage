@@ -141,7 +141,7 @@ class CustomRule(object):
         return metabody(adageobj,self.body)
 
 def metapred(adageobj,rulespec):
-    log.info('checking predicate',rulespec)
+    log.info('checking predicate %s',rulespec)
     if rulespec['type']=='byname':
         node = adageobj.dag.getNodeByName(rulespec['name'])
         if not node:
@@ -151,7 +151,7 @@ def metapred(adageobj,rulespec):
         return True
 
 def metabody(adageobj,taskspec):
-    log.info('applying body',taskspec)
+    log.info('applying body %s',taskspec)
     node = CustomNode(task = taskspec, nodename = taskspec['name'])
     adageobj.dag.addNode(node , depends_on = [])
 
@@ -174,23 +174,35 @@ class CustomTracker(object):
 def main():
     
     create_state({'proxies':{},'results':{},'proxystate':{}},{})
-    backend = CustomBackend()
-
+    backend  = CustomBackend()
     adageobj = CustomState()
-    
     adageobj.rules = [
         CustomRule({'type':'always'}, {'type':'typeA', 'name': 'typeAnode'}),
         CustomRule({'type':'byname', 'name':'typeAnode'}, {'type':'typeB', 'name': 'typeBnode'})
     ]
-    
+
+    ym = adage.yes_man()
+    ym.next() #prime decider
+
+    coroutine = adage.adage_coroutine(backend,ym)
+    coroutine.next() #prime the coroutine....
+
+
+    coroutine.send(adageobj)
+
+    # manual stepping...
+    # for state in coroutine:
+    #     print 'ready to step....'
+    #     import IPython
+    #     IPython.embed()
+
+    # automated stepping...
     mytrack = CustomTracker()
     try:
         adage.rundag(adageobj, backend = backend, track = True, additional_trackers = [mytrack], workdir = 'simpleTrack', update_interval = 30, trackevery = 30)
     except RuntimeError:
         log.error('ERROR')
 
-    import IPython
-    IPython.embed()
 
 if __name__ == '__main__':
     main()
