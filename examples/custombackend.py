@@ -202,6 +202,8 @@ def main():
         adage.rundag(adageobj, backend = backend, track = True, additional_trackers = [mytrack], workdir = 'simpleTrack', update_interval = 30, trackevery = 30)
     except RuntimeError:
         log.error('ERROR')
+    import IPython
+    IPython.embed()
 
 
 if __name__ == '__main__':

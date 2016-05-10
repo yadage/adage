@@ -19,10 +19,10 @@ class Node(object):
         self._state = nodestate.DEFINED
         self.resultproxy = None
         self.backend = None
-
+        
     def __repr__(self):
         return '<Node name: {} id: {} state: {}>'.format(self.name,self.identifier,self.state)
-
+        
     def update_state(self):
         #if we do not have a result object
         #that means it's not submitted yet
