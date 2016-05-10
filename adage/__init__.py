@@ -123,7 +123,17 @@ def yes_man():
         #we yield True and wait to receive some data
         data = yield value
 
-def rundag(adageobj, track = False, backend = None, decider = None, loggername = None, workdir = None, trackevery = 1, update_interval = 0.01, additional_trackers = None):
+def rundag(adageobj,
+           track = False,
+           backend = None,
+           decider = None,
+           loggername = None,
+           workdir = None,
+           trackevery = 1,
+           update_interval = 0.01,
+           additional_trackers = None
+           ):
+           
     if loggername:
         global log
         log = logging.getLogger(loggername)
