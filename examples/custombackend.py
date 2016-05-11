@@ -4,7 +4,6 @@ import logging
 import json
 import uuid
 
-logging.basicConfig(level = logging.DEBUG)
 log = logging.getLogger(__name__)
 
 BACKENDDATA = None
@@ -230,6 +229,7 @@ def load(jsondata,backend):
     return newstate
         
 def main():
+    logging.basicConfig(level = logging.DEBUG)
     create_state({'proxies':{},'results':{},'proxystate':{}},{})
     backend  = CustomBackend()
     adageobj = CustomState()
