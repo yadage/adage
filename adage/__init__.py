@@ -156,7 +156,7 @@ def rundag(adageobj,
     if track:
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
-        trackerlist += [trackers.JSONDumpTracker(dumpname = '{}/adage.json'.format(workdir))]
+        # trackerlist += [trackers.JSONDumpTracker(dumpname = '{}/adage.json'.format(workdir))]
 
     if additional_trackers:
         trackerlist += additional_trackers

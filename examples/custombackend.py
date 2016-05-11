@@ -205,8 +205,8 @@ def main():
                      trackevery = 30)
     except RuntimeError:
         log.error('ERROR')
-    import IPython
-    IPython.embed()
+    # import IPython
+    # IPython.embed()
 
 
 if __name__ == '__main__':
