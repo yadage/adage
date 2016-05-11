@@ -1,15 +1,14 @@
 import adage.backends
 from adage import adagetask, adageop, Rule, adageobject
 import logging
+import json
+import uuid
 
 logging.basicConfig(level = logging.DEBUG)
 log = logging.getLogger(__name__)
 
 BACKENDDATA = None
 WORKFLOWDATA = None
-
-import json
-import uuid
 
 class StateInterface(object):
     def __init__(self,statefile,initdata = None):
@@ -31,7 +30,6 @@ def create_state(initbackend = None,initwflow = None):
     WORKFLOWDATA = StateInterface('workflowstate.json',initwflow)
         
 class CustomProxy(object):
-    
     @classmethod
     def createNewProxy(cls,task):
         proxyid = str(uuid.uuid1())
@@ -232,11 +230,6 @@ def load(jsondata,backend):
     return newstate
         
 def main():
-    # create_state()
-    # x = WORKFLOWDATA.get()
-    # load(x)
-    # return
-    
     create_state({'proxies':{},'results':{},'proxystate':{}},{})
     backend  = CustomBackend()
     adageobj = CustomState()
@@ -248,42 +241,6 @@ def main():
         CustomRule({'type':'byname', 'name':'typeAnode'}, {'type':'typeB', 'name': 'typeBnode','depend':'typeAnode'})
     ]
     save(adageobj,CustomJSONEncoder)
-    return
-
-    # manual stepping...
-    # ym = adage.yes_man()
-    # ym.next() #prime decider
-    #
-    # coroutine = adage.adage_coroutine(backend,ym)
-    # coroutine.next() #prime the coroutine....
-    # coroutine.send(adageobj)
-    # while True:
-    #     try:
-    #         state = coroutine.next()
-    #         save(state,CustomJSONEncoder)
-    #         import time
-    #         time.sleep(1)
-    #     except StopIteration:
-    #         save(state,CustomJSONEncoder)
-    #         break
- 
-    
- 
-    # automated stepping...
-    # mytrack = CustomTracker()
-    # try:
-    #     adage.rundag(adageobj,
-    #                  backend = backend,
-    #                  track = True,
-    #                  additional_trackers = [mytrack],
-    #                  workdir = 'simpleTrack',
-    #                  update_interval = 30,
-    #                  trackevery = 30)
-    # except RuntimeError:
-    #     log.error('ERROR')
-    # import IPython
-    # IPython.embed()
-
 
 if __name__ == '__main__':
     main()
