@@ -112,7 +112,7 @@ class CustomState(object):
     @rules.setter
     def rules(self,newrules):
         log.info('giving out open rules')
-        self.obj.rules += newrules
+        self.obj.rules = newrules
 
     @property
     def applied_rules(self):
@@ -173,11 +173,17 @@ def main():
     create_state({'proxies':{},'results':{},'proxystate':{}},{})
     backend  = CustomBackend()
     adageobj = CustomState()
-    adageobj.rules = [
+    adageobj.rules = []
+    adageobj.rules += [
         CustomRule({'type':'always'}, {'type':'typeA', 'name': 'typeAnode'}),
+    ]
+    adageobj.rules += [
         CustomRule({'type':'byname', 'name':'typeAnode'}, {'type':'typeB', 'name': 'typeBnode'})
     ]
 
+    print adageobj.rules
+    # return
+    
     ym = adage.yes_man()
     ym.next() #prime decider
 
