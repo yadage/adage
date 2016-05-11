@@ -98,7 +98,7 @@ class CustomBackend(object):
 class CustomState(object):
     def __init__(self):
         self.obj = adage.adageobject()
-
+        
     @property
     def dag(self):
         log.info('giving out DAG')
@@ -111,7 +111,7 @@ class CustomState(object):
 
     @rules.setter
     def rules(self,newrules):
-        log.info('giving out open rules')
+        log.info('setting rules')
         self.obj.rules = newrules
 
     @property
@@ -119,17 +119,26 @@ class CustomState(object):
         log.info('giving out applied rules')
         return self.obj.applied_rules
 
+    @applied_rules.setter
+    def applied_rules(self,newrules):
+        log.info('setting applied rules')
+        self.obj.applied_rules = newrules
+
+
 import adage.serialize
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, CustomState):
-            return adage.serialize.obj_to_json(obj)
+            return adage.serialize.obj_to_json(obj,
+                ruleserializer = lambda r: r.json(),
+                proxyserializer = lambda p: p.json(),
+                taskserializer = lambda t: t)
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
 class CustomNode(adage.node.Node):
-    def __init__(self,task,nodename):
-        super(CustomNode,self).__init__(task = task, name = nodename)
+    def __init__(self,task,nodename,identifier = None):
+        super(CustomNode,self).__init__(identifier = identifier, task = task, name = nodename)
     
     def __repr__(self):
         return '<Custom Node: {}>'.format(self.name)
@@ -138,6 +147,9 @@ class CustomRule(object):
     def __init__(self,predicate,body):
         self.pred = predicate
         self.body = body
+
+    def json(self):
+        return {'pred':self.pred,'body':self.body}
 
     def applicable(self,adageobj):
         return metapred(adageobj,self.pred)
@@ -158,7 +170,10 @@ def metapred(adageobj,rulespec):
 def metabody(adageobj,taskspec):
     log.info('applying body %s',taskspec)
     node = CustomNode(task = taskspec, nodename = taskspec['name'])
-    adageobj.dag.addNode(node , depends_on = [])
+    depnode = None
+    if 'depend' in taskspec:
+        depnode = adageobj.dag.getNodeByName(taskspec['depend'])
+    adageobj.dag.addNode(node , depends_on = [depnode] if depnode else [])
 
 @adagetask
 def atask(taskspec):
@@ -180,7 +195,47 @@ class CustomTracker(object):
         self.track(adageobj)
         log.info('finalizing tracker')
 
+def save(state,encoder):
+    jsondata = json.dumps(state, cls = encoder)
+    WORKFLOWDATA.commit(json.loads(jsondata))
+    log.info('tracking using custom JSON tracker')
+
+    
+def load(jsondata,backend):
+    statedict = {
+        'DEFINED': adage.nodestate.DEFINED,
+        'RUNNING': adage.nodestate.RUNNING,
+        'FAILED':  adage.nodestate.FAILED,
+        'SUCCESS': adage.nodestate.SUCCESS,
+    }
+    
+    newstate = CustomState()
+    for jsonnode in jsondata['dag']['nodes']:
+        node = CustomNode(identifier = jsonnode['id'], task = jsonnode['task'], nodename = jsonnode['name'])
+        node._state = statedict[jsonnode['state']]
+        node.resultproxy = CustomProxy(jsonnode['proxy']['proxyid'],jsonnode['proxy']['task'])
+        node.define_time = jsonnode['timestamps'].get('defined',None)
+        node.submit_time = jsonnode['timestamps'].get('submit',None)
+        node.ready_by_time = jsonnode['timestamps'].get('ready by',None)
+        node.backend = backend
+        newstate.dag.addNode(node)
+   
+    for fromnode,tonode in jsondata['dag']['edges']:
+        newstate.dag.add_edge(fromnode,tonode)
+        
+    for jsonrule in jsondata['rules']:
+        newstate.rules += [CustomRule(jsonrule['pred'],jsonrule['body'])]
+
+    for jsonrule in jsondata['applied']:
+        newstate.applied_rules += [CustomRule(jsonrule['pred'],jsonrule['body'])]
+    
+    return newstate
+        
 def main():
+    # create_state()
+    # x = WORKFLOWDATA.get()
+    # load(x)
+    # return
     
     create_state({'proxies':{},'results':{},'proxystate':{}},{})
     backend  = CustomBackend()
@@ -190,39 +245,42 @@ def main():
         CustomRule({'type':'always'}, {'type':'typeA', 'name': 'typeAnode'}),
     ]
     adageobj.rules += [
-        CustomRule({'type':'byname', 'name':'typeAnode'}, {'type':'typeB', 'name': 'typeBnode'})
+        CustomRule({'type':'byname', 'name':'typeAnode'}, {'type':'typeB', 'name': 'typeBnode','depend':'typeAnode'})
     ]
-
-    print adageobj.rules
-    # return
-    
-    ym = adage.yes_man()
-    ym.next() #prime decider
-
-    coroutine = adage.adage_coroutine(backend,ym)
-    coroutine.next() #prime the coroutine....
-
-
-    coroutine.send(adageobj)
+    save(adageobj,CustomJSONEncoder)
+    return
 
     # manual stepping...
-    # for state in coroutine:
-    #     print 'ready to step....'
-    #     import IPython
-    #     IPython.embed()
-
+    # ym = adage.yes_man()
+    # ym.next() #prime decider
+    #
+    # coroutine = adage.adage_coroutine(backend,ym)
+    # coroutine.next() #prime the coroutine....
+    # coroutine.send(adageobj)
+    # while True:
+    #     try:
+    #         state = coroutine.next()
+    #         save(state,CustomJSONEncoder)
+    #         import time
+    #         time.sleep(1)
+    #     except StopIteration:
+    #         save(state,CustomJSONEncoder)
+    #         break
+ 
+    
+ 
     # automated stepping...
-    mytrack = CustomTracker()
-    try:
-        adage.rundag(adageobj,
-                     backend = backend,
-                     track = True,
-                     additional_trackers = [mytrack],
-                     workdir = 'simpleTrack',
-                     update_interval = 30,
-                     trackevery = 30)
-    except RuntimeError:
-        log.error('ERROR')
+    # mytrack = CustomTracker()
+    # try:
+    #     adage.rundag(adageobj,
+    #                  backend = backend,
+    #                  track = True,
+    #                  additional_trackers = [mytrack],
+    #                  workdir = 'simpleTrack',
+    #                  update_interval = 30,
+    #                  trackevery = 30)
+    # except RuntimeError:
+    #     log.error('ERROR')
     # import IPython
     # IPython.embed()
 

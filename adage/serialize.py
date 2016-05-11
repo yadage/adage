@@ -22,11 +22,12 @@ def obj_to_json(adageobj, ruleserializer = noop_ruleserializer, taskserializer =
     dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
     data = {'dag':None, 'rules':None, 'applied':None}
     
-    data['dag'] = {'nodes':[]}
+    data['dag'] = {'nodes':[], 'edges': []}
     for node in nx.topological_sort(dag):
         nodeobj = dag.getNode(node)
-        data['dag']['nodes']+=[node_to_json(dag,nodeobj,taskserializer,proxyserializer)]
-
+        data['dag']['nodes']+=[node_to_json(nodeobj,taskserializer,proxyserializer)]
+    
+    data['dag']['edges'] += dag.edges()
 
     data['rules'] = []
     for rule in rules:
@@ -39,20 +40,17 @@ def obj_to_json(adageobj, ruleserializer = noop_ruleserializer, taskserializer =
     return data
 
 
-def node_to_json(dag,nodeobj,taskserializer, proxyserializer):
+def node_to_json(nodeobj,taskserializer, proxyserializer):
     nodeinfo = {
         'id':nodeobj.identifier,
         'name':nodeobj.name,
         'task':taskserializer(nodeobj.task),
-        
         'timestamps':{
             'defined': nodeobj.define_time,
             'submit': nodeobj.submit_time,
             'ready by': nodeobj.ready_by_time
         },
-        
         'state':str(nodeobj.state),
-        'proxy':proxyserializer(nodeobj.resultproxy),
-        'dependencies':dag.predecessors(nodeobj.identifier),
+        'proxy':proxyserializer(nodeobj.resultproxy)
     }
     return nodeinfo
