@@ -9,26 +9,6 @@ class DefaultAdageEncoder(json.JSONEncoder):
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
-def obj_to_json(adageobj):
-    dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
-    data = {'dag':None, 'rules':None, 'applied':None}
-    
-    data['dag'] = {'nodes':[]}
-    for node in nx.topological_sort(dag):
-        nodeobj = dag.getNode(node)
-        data['dag']['nodes']+=[node_to_json(dag,nodeobj)]
-
-
-    data['rules'] = []
-    for rule in rules:
-        data['rules'] += [rule_to_json(rule)]
-
-    data['applied'] = []
-    for rule in applied:
-        data['applied'] += [rule_to_json(rule)]
-        
-    return data
-
 def noop_taskserializer(task):
     return 'unserializable_task'
 
@@ -38,7 +18,28 @@ def noop_proxyserializer(proxy):
 def noop_ruleserializer(rule):
     return 'unserializable_rule'
 
-def node_to_json(dag,nodeobj,taskserializer = noop_taskserializer, proxyserializer = noop_proxyserializer):
+def obj_to_json(adageobj, ruleserializer = noop_ruleserializer, taskserializer = noop_taskserializer, proxyserializer = noop_proxyserializer):
+    dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
+    data = {'dag':None, 'rules':None, 'applied':None}
+    
+    data['dag'] = {'nodes':[]}
+    for node in nx.topological_sort(dag):
+        nodeobj = dag.getNode(node)
+        data['dag']['nodes']+=[node_to_json(dag,nodeobj,taskserializer,proxyserializer)]
+
+
+    data['rules'] = []
+    for rule in rules:
+        data['rules'] += [ruleserializer(rule)]
+
+    data['applied'] = []
+    for rule in applied:
+        data['applied'] += [ruleserializer(rule)]
+        
+    return data
+
+
+def node_to_json(dag,nodeobj,taskserializer, proxyserializer):
     nodeinfo = {
         'id':nodeobj.identifier,
         'name':nodeobj.name,
@@ -55,7 +56,3 @@ def node_to_json(dag,nodeobj,taskserializer = noop_taskserializer, proxyserializ
         'dependencies':dag.predecessors(nodeobj.identifier),
     }
     return nodeinfo
-
-def rule_to_json(rule, rule_serializer = noop_ruleserializer):
-    ruleinfo = rule_serializer(rule)
-    return ruleinfo

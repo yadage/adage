@@ -119,6 +119,14 @@ class CustomState(object):
         log.info('giving out applied rules')
         return self.obj.applied_rules
 
+import adage.serialize
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, CustomState):
+            return adage.serialize.obj_to_json(obj)
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
 class CustomNode(adage.node.Node):
     def __init__(self,task,nodename):
         super(CustomNode,self).__init__(task = task, name = nodename)
@@ -160,12 +168,16 @@ def atask(taskspec):
 
 class CustomTracker(object):
     def initialize(self,adageobj):
+        self.track(adageobj)
         log.info('initializing tracker')
         
     def track(self,adageobj):
-        log.info('tracking using tracker')
+        jsondata = json.dumps(adageobj, cls = CustomJSONEncoder)
+        WORKFLOWDATA.commit(json.loads(jsondata))
+        log.info('tracking using custom JSON tracker')
         
     def finalize(self,adageobj):
+        self.track(adageobj)
         log.info('finalizing tracker')
 
 def main():
