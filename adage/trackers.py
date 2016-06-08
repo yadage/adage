@@ -26,7 +26,7 @@ class JSONDumpTracker(object):
             json.dump(adageobj,dumpfile, cls = self.serializer)
 
 class GifTracker(object):
-    def __init__(self,gifname,workdir,frames = 20):
+    def __init__(self,gifname,workdir,frames = 40):
         self.gifname = gifname
         self.workdir = workdir
         self.frames = frames

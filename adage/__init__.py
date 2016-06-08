@@ -47,7 +47,7 @@ def nodes_left_or_rule_applicable(adageobj):
 def update_coroutine(adageobj):
     for i,rule in reversed([x for x in enumerate(adageobj.rules)]):
         if rule.applicable(adageobj):
-            do_apply = yield
+            do_apply = yield rule
             if do_apply:
                 log.info('extending graph.')
                 rule.apply(adageobj)
@@ -60,9 +60,9 @@ def update_dag(adageobj,decider):
     #iterate rules in reverse so we can safely pop items
     anyapplied = False
     update_loop = update_coroutine(adageobj)
-    for possible_update in update_loop:
-        log.debug('we could update this..')
-        command = decider.send(adageobj)
+    for possible_rule in update_loop:
+        log.info('we could update this with rule: %s',possible_rule)
+        command = decider.send((possible_rule,adageobj))
         if command:
             log.debug('we are in fact updating this..')
             anyapplied = True
@@ -118,9 +118,10 @@ def yes_man():
     # we yield until we receive some data via send()
     data = yield
     while True:
+        rule, state = data
+        log.info('received rule: %s state: %s',rule,state)
+        #we yield True and wait again to receive some data
         value = True
-        log.debug('received data: %s',data)
-        #we yield True and wait to receive some data
         data = yield value
 
 def rundag(adageobj,
