@@ -128,7 +128,7 @@ class CustomJSONEncoder(json.JSONEncoder):
         if isinstance(obj, CustomState):
             return adage.serialize.obj_to_json(obj,
                 ruleserializer = lambda r: r.json(),
-                proxyserializer = lambda p: p.json(),
+                proxyserializer = lambda p: p.json() if p else None,
                 taskserializer = lambda t: t)
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
@@ -210,7 +210,7 @@ def load(jsondata,backend):
     for jsonnode in jsondata['dag']['nodes']:
         node = CustomNode(identifier = jsonnode['id'], task = jsonnode['task'], nodename = jsonnode['name'])
         node._state = statedict[jsonnode['state']]
-        node.resultproxy = CustomProxy(jsonnode['proxy']['proxyid'],jsonnode['proxy']['task'])
+        node.resultproxy = CustomProxy(jsonnode['proxy']['proxyid'],jsonnode['proxy']['task']) if jsonnode['proxy'] else None
         node.define_time = jsonnode['timestamps'].get('defined',None)
         node.submit_time = jsonnode['timestamps'].get('submit',None)
         node.ready_by_time = jsonnode['timestamps'].get('ready by',None)
