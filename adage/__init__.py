@@ -47,7 +47,7 @@ def nodes_left_or_rule_applicable(adageobj):
 def update_coroutine(adageobj):
     for i,rule in reversed([x for x in enumerate(adageobj.rules)]):
         if rule.applicable(adageobj):
-            do_apply = yield
+            do_apply = yield rule
             if do_apply:
                 log.info('extending graph.')
                 rule.apply(adageobj)
@@ -60,9 +60,9 @@ def update_dag(adageobj,decider):
     #iterate rules in reverse so we can safely pop items
     anyapplied = False
     update_loop = update_coroutine(adageobj)
-    for possible_update in update_loop:
-        log.debug('we could update this..')
-        command = decider.send(adageobj)
+    for possible_rule in update_loop:
+        log.info('we could update this with rule: %s',possible_rule)
+        command = decider.send((possible_rule,adageobj))
         if command:
             log.debug('we are in fact updating this..')
             anyapplied = True
@@ -72,7 +72,7 @@ def update_dag(adageobj,decider):
         log.info('we applied a change, so we will recurse to see if we can apply anything else give updated state')
         update_dag(adageobj,decider)
 
-def process_dag(backend,adageobj):
+def process_dag(backend,adageobj,decider):
     dag = adageobj.dag
     for node in nx.topological_sort(dag):
         nodeobj = dag.getNode(node)
@@ -83,9 +83,12 @@ def process_dag(backend,adageobj):
             log.debug("node already submitted. continue")
             continue;
         if dagstate.upstream_ok(dag,nodeobj):
-            log.info('submitting %s job',nodeobj)
-            nodeobj.resultproxy = backend.submit(nodeobj.task)
-            nodeobj.submit_time = time.time()
+            log.info('Node %s upstream is OK and has not been submitted yet. deciding whether to submit',nodeobj)
+            do_submit = decider.send((dag,nodeobj))
+            if do_submit:
+                log.info('submitting %s job',nodeobj)
+                nodeobj.resultproxy = backend.submit(nodeobj.task)
+                nodeobj.submit_time = time.time()
         if dagstate.upstream_failure(dag,nodeobj):
             log.debug('not submitting node: %s due to upstream failure',node)
 
@@ -97,7 +100,7 @@ def update_state(adageobj):
 def trackprogress(trackerlist,adageobj):
     map(lambda t: t.track(adageobj), trackerlist)
 
-def adage_coroutine(backend,decider):
+def adage_coroutine(backend,extend_decider,submit_decider):
     """the main loop as a coroutine, for sequential stepping"""
     # after priming the coroutin, we yield right away until we get send a state object
     state = yield
@@ -107,8 +110,8 @@ def adage_coroutine(backend,decider):
 
     #starting the loop
     while nodes_left_or_rule_applicable(state):
-        update_dag(state,decider)
-        process_dag(backend,state)
+        update_dag(state,extend_decider)
+        process_dag(backend,state,submit_decider)
         update_state(state)
         #we're done for this tick, let others proceed
         yield state
@@ -117,15 +120,17 @@ def yes_man():
     # we yield until we receive some data via send()
     data = yield
     while True:
+        rule, state = data
+        log.info('received rule: %s state: %s',rule,state)
+        #we yield True and wait again to receive some data
         value = True
-        log.debug('received data: %s',data)
-        #we yield True and wait to receive some data
         data = yield value
 
 def rundag(adageobj,
            track = False,
            backend = None,
-           decider = None,
+           extend_decider = None,
+           submit_decider = None,
            loggername = None,
            workdir = None,
            trackevery = 1,
@@ -146,10 +151,13 @@ def rundag(adageobj,
     if not backend:
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
+    if not extend_decider:
+        extend_decider = yes_man()
+        extend_decider.next() #prime it..
 
-    if not decider:
-        decider = yes_man()
-        decider.next() #prime it..
+    if not submit_decider:
+        submit_decider = yes_man()
+        submit_decider.next() #prime it..
 
     trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     if track:
@@ -163,7 +171,7 @@ def rundag(adageobj,
     map(lambda t: t.initialize(adageobj), trackerlist)
 
     log.info('preparing adage coroutine.')
-    coroutine = adage_coroutine(backend,decider)
+    coroutine = adage_coroutine(backend,extend_decider,submit_decider)
     coroutine.next() #prime the coroutine....
     coroutine.send(adageobj)
 
