@@ -96,21 +96,20 @@ def update_state(adageobj):
 
 def trackprogress(trackerlist,adageobj):
     map(lambda t: t.track(adageobj), trackerlist)
-    
+
 def adage_coroutine(backend,decider):
-    """the main loop as a coroutine, for sequential stepping"""    
+    """the main loop as a coroutine, for sequential stepping"""
     # after priming the coroutin, we yield right away until we get send a state object
     state = yield
-    
+
     # after receiving the state object, we yield and will start the loop once we regain controls
     yield
-    
+
     #starting the loop
     while nodes_left_or_rule_applicable(state):
         update_dag(state,decider)
         process_dag(backend,state)
         update_state(state)
-        
         #we're done for this tick, let others proceed
         yield state
 
@@ -133,7 +132,7 @@ def rundag(adageobj,
            update_interval = 0.01,
            additional_trackers = None
            ):
-           
+
     if loggername:
         global log
         log = logging.getLogger(loggername)
@@ -147,11 +146,11 @@ def rundag(adageobj,
     if not backend:
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
-    
+
     if not decider:
         decider = yes_man()
         decider.next() #prime it..
-    
+
     trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
     if track:
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
@@ -160,7 +159,7 @@ def rundag(adageobj,
 
     if additional_trackers:
         trackerlist += additional_trackers
-    
+
     map(lambda t: t.initialize(adageobj), trackerlist)
 
     log.info('preparing adage coroutine.')
@@ -178,22 +177,22 @@ def rundag(adageobj,
     except:
         log.exception('some weird exception caught in adage process loop')
         raise
-    
+
     if adageobj.rules:
         log.warning('some rules were not applied.')
-        
+
     log.info('all running jobs are finished.')
     log.info('track last time')
-    
+
     map(lambda t: t.finalize(adageobj), trackerlist)
-    
+
     log.info('validating execution')
-    
+
     if not validate_finished_dag(adageobj.dag):
         log.error('DAG execution not validating')
         raise RuntimeError('DAG execution not validating')
     log.info('execution valid. (in terms of execution order)')
-    
+
     if any(adageobj.dag.getNode(x).state == nodestate.FAILED for x in adageobj.dag.nodes()):
         log.error('raising RunTimeError due to failed jobs')
         raise RuntimeError('DAG execution failed')

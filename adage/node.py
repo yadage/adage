@@ -16,27 +16,27 @@ class Node(object):
         self.submit_time = None
         self.ready_by_time = None
 
-        self._state = nodestate.DEFINED
         self.resultproxy = None
         self.backend = None
-        
+        self._state = nodestate.DEFINED
+
     def __repr__(self):
         return '<Node name: {} id: {} state: {}>'.format(self.name,self.identifier,self.state)
-        
+
     def update_state(self):
         #if we do not have a result object
         #that means it's not submitted yet
         if not self.resultproxy:
             self._state = nodestate.DEFINED
             return
-        
+
         #if we have a resultobject
         #but the result is not ready
         #the node is still running
         if not self.ready():
             self._state = nodestate.RUNNING
             return
-            
+
         #if it's ready it's either successful
         #or failed
         if self.successful():
@@ -45,7 +45,7 @@ class Node(object):
         else:
             self._state = nodestate.FAILED
             return
-    
+
     @property
     def state(self):
         self.update_state()
@@ -54,7 +54,7 @@ class Node(object):
     @property
     def result(self):
         return self.backend.result(self.resultproxy)
-        
+
     def ready(self):
         if not self.resultproxy:
             return False
