@@ -1,4 +1,3 @@
-import networkx as nx
 import json
 import adage.adageobject
 import adage.graph
