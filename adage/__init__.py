@@ -72,12 +72,16 @@ def update_dag(adageobj,decider):
         log.info('we applied a change, so we will recurse to see if we can apply anything else give updated state')
         update_dag(adageobj,decider)
 
+def submit_node(nodeobj,backend):
+    nodeobj.resultproxy = backend.submit(nodeobj.task)
+    nodeobj.submit_time = time.time()
+    if not nodeobj.backend:
+        nodeobj.backend = backend
+
 def process_dag(backend,adageobj,decider):
     dag = adageobj.dag
     for node in nx.topological_sort(dag):
         nodeobj = dag.getNode(node)
-        if not nodeobj.backend:
-            nodeobj.backend = backend
         log.debug("working on node: %s with obj %s",node,nodeobj)
         if nodeobj.submit_time:
             log.debug("node already submitted. continue")
@@ -87,8 +91,7 @@ def process_dag(backend,adageobj,decider):
             do_submit = decider.send((dag,nodeobj))
             if do_submit:
                 log.info('submitting %s job',nodeobj)
-                nodeobj.resultproxy = backend.submit(nodeobj.task)
-                nodeobj.submit_time = time.time()
+                submit_node(nodeobj,backend)
         if dagstate.upstream_failure(dag,nodeobj):
             log.debug('not submitting node: %s due to upstream failure',node)
 
