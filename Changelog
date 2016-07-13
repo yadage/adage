@@ -1,2 +1,8 @@
+2016-07-13 Lukas Heinrich <lukas.heinrich@gmail.com>
+	* interactive DAG extensions (rules adding rules)
+	* persistent state (as JSON)
+	* examples manual stepping of workflow
+	* release 0.4.0
+
 2015-12-08 Lukas Heinrich <lukas.heinrich@gmail.com>
 	* refactored in preparation for more complex backends
