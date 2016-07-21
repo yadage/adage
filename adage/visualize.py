@@ -24,7 +24,7 @@ def colorize_graph(dag,normtime = None):
     start = min([dag.getNode(n).define_time for n in allnodes])
     stop  = max([dag.getNode(n).ready_by_time for n in allnodes])
     time = start + normtime*(stop-start)
-    return colorize_graph_at_time(time)
+    return colorize_graph_at_time(dag,time)
 
 def colorize_graph_at_time(dag,time):
     colorized = nx.DiGraph()
