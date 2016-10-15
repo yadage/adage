@@ -52,7 +52,7 @@ def main():
     prepare_node    = adageobj.dag.addTask(boolean_task.s(), nodename = 'bool')
     adageobj.rules = [ Rule(node_done.s(nodename = 'bool'), schedule_if_else.s(depnode = 'bool')) ]
 
-    adage.rundag(adageobj, track = True, trackevery = 5)
+    adage.rundag(adageobj, default_trackers = True, trackevery = 5)
 
 if __name__=='__main__':
     main()

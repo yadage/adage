@@ -22,4 +22,4 @@ def schedule(depnodes, adageobj):
         adageobj.dag.addTask(hello.s(one = 'part {}'.format(i), two = p), nodename = p, depends_on = depnodes.values())
 
 workflow.rules = [schedule]
-adage.rundag(workflow, track = True, workdir = 'callback')
+adage.rundag(workflow, default_trackers = True, workdir = 'callback')

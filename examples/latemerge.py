@@ -58,7 +58,7 @@ def main():
         Rule(variable_nodes_done.s(varnodes),schedule_pdf.s([fix0],varnodes))
     ]
 
-    adage.rundag(adageobj,track = True, workdir = 'bla')
+    adage.rundag(adageobj,default_trackers = True, workdir = 'bla')
 
 if __name__=='__main__':
     main()

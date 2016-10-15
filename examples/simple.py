@@ -62,7 +62,7 @@ def main():
     # adageobj.rules = [Rule(predicate.s(depnode = two),rulebody.s(depnode = two))]
 
     try:
-        adage.rundag(adageobj, backend = backend, track = True, workdir = 'simpleTrack', update_interval = 10, trackevery = 10)
+        adage.rundag(adageobj, backend = backend, default_trackers = True, workdir = 'simpleTrack', update_interval = 10, trackevery = 10)
     except RuntimeError:
         log.error('ERROR')
 

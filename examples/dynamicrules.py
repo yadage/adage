@@ -55,6 +55,6 @@ def _(adageobj):
         
 
 logging.basicConfig(level = logging.INFO)
-adage.rundag(adageobj, track = True)
+adage.rundag(adageobj, default_trackers = True)
 
     

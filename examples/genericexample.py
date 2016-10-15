@@ -76,7 +76,7 @@ def main():
              ]
 
     adageobj.rules = rules
-    adage.rundag(adageobj, track = True, workdir = 'workdirtrack', trackevery = 4)
+    adage.rundag(adageobj, default_trackers = True, workdir = 'workdirtrack', trackevery = 4)
 
 if __name__=='__main__':
     main()
