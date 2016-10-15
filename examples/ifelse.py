@@ -2,9 +2,6 @@ import adage
 import adage.dagstate
 from adage import adageop, Rule
 
-#import some task functions that we'd like to run
-from physicstasks import prepare, download, rivet, pythia, plotting, mcviz
-
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -29,7 +26,6 @@ def second_option():
 
 @adageop
 def node_done(adageobj,nodename):
-    #we can only run pythia once the donwload is done and we know hoe many LHE files we have
     node = adageobj.dag.getNodeByName(nodename)
     if node:
         return adage.dagstate.node_status(node)
