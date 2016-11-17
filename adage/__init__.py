@@ -140,7 +140,7 @@ def adage_coroutine(backend,extend_decider,submit_decider):
         #we're done for this tick, let others proceed
         yield state
 
-def yes_man(messagestring = 'rule'):
+def yes_man(messagestring = 'received %s and %s'):
     '''trivial decision function that just returns True always'''
     # we yield until we receive some data via send()
     data = yield
@@ -185,11 +185,11 @@ def rundag(adageobj,
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
     if not extend_decider:
-        extend_decider = yes_man('received rule: %s state: %s')
+        extend_decider = yes_man('say yes to graph extension by rule: %s state: %s')
         extend_decider.next() #prime it..
 
     if not submit_decider:
-        submit_decider = yes_man('received node: %s%s')
+        submit_decider = yes_man('say yes to node submission of: %s%s')
         submit_decider.next() #prime it..
 
     trackerlist = []
