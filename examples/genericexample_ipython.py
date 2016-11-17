@@ -1,16 +1,12 @@
 import adage
 from adage import adagetask, adageop, Rule
 import networkx as nx
-import random
-import logging
-import time
-log = logging.getLogger(__name__)
-logging.basicConfig()
 
 # random DAG code taken from IPython cluster doc
 # http://ipython.org/ipython-doc/dev/parallel/dag_dependencies.html
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
+    import random
     G = nx.DiGraph()
     for i in range(nodes):
         G.add_node(i)
@@ -30,9 +26,10 @@ def random_dag(nodes, edges):
 @adagetask
 def hello(workdir):
     import logging
+    logging.basicConfig()
+    log = logging.getLogger(__name__)
     import time
     import random
-    log = logging.getLogger(__name__)
     log.info("running job in workdir %s",workdir)
     time.sleep(2+5*random.random())
     # if random.random() < 0.91:
@@ -43,9 +40,10 @@ def hello(workdir):
 @adagetask
 def newtask(note):
     import logging
+    logging.basicConfig()
+    log = logging.getLogger(__name__)
     import time
     import random
-    log = logging.getLogger(__name__)
     log.info('doing some other task this is our note: %s',note)
     time.sleep(2+5*random.random())
 
