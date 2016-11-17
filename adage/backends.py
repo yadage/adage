@@ -26,7 +26,7 @@ class MultiProcBackend(object):
             t,v,tb =    sys.exc_info()
             traceback.print_tb(tb)
             return (t,v)
-            
+
 class CeleryBackend(object):
     def __init__(self,app):
         self.app = app
@@ -48,10 +48,31 @@ class CeleryBackend(object):
             self.result(resultproxy)
         except:
             return sys.exc_info()
-        
-class DummyResultProxy(object):        
+
+
+class IPythonParallelBackend(object):
+    def __init__(self,client):
+        self.client = client
+        self.view = self.client.load_balanced_view(0)
+
+    def submit(self,task):
+        return self.view.apply(task.func,*task.args,**task.keywords)
+
+    def result(self,resultproxy):
+        return resultproxy.get()
+
+    def ready(self,resultproxy):
+        return resultproxy.ready()
+
+    def successful(self,resultproxy):
+        return resultproxy.successful()
+
+    def fail_info(self,resultproxy):
+        return resultproxy.exception_info()
+
+class DummyResultProxy(object):
     pass
-    
+
 class DummyBackend(object):
     def submit(self,task):
         if task:
@@ -60,12 +81,12 @@ class DummyBackend(object):
 
     def result(self,resultproxy):
         return None
-    
+
     def ready(self,resultproxy):
         return True
-    
+
     def successful(self,resultproxy):
         return False
-    
+
     def fail_info(self,resultproxy):
         return 'cannot give reason :( '

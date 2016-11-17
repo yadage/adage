@@ -12,7 +12,7 @@ def adageop(func):
         return functools.partial(func,*args,**kwargs)
     func.s = partial
     return func
-    
+
 class Rule(object):
     def __init__(self,predicate,body):
         self.predicate = predicate
@@ -22,7 +22,7 @@ class Rule(object):
         return self.predicate(adageobj)
 
     def apply(self,adageobj):
-        return self.body(adageobj)
+        return self.body(adageobj = adageobj)
 
 def adagetask(func):
     """
@@ -35,19 +35,19 @@ def adagetask(func):
         from celery import shared_task
         func.celery = shared_task(func)
     except ImportError:
-        pass        
+        pass
 
     def partial(*args,**kwargs):
         return functools.partial(func,*args,**kwargs)
     func.s = partial
     return func
-    
+
 def callbackrule(after = None):
     """
     A decorator that creates a adage Rule from a callback function
     The after argument is expected to container a dictionary
     of node identifiers. The callback is expected have two arguments
-    A dictionary with the same keys as in after as keys, and the 
+    A dictionary with the same keys as in after as keys, and the
     corresponding nodes as values, as well as the adajeobj will be
     passed to the callback
     """
@@ -58,6 +58,6 @@ def callbackrule(after = None):
         def body(adageobj):
             depnodes = {k:adageobj.dag.getNode(v) for k,v in after.iteritems()}
             func(depnodes = depnodes, adageobj = adageobj)
-            
+
         return Rule(predicate,body)
     return decorator
