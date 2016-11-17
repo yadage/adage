@@ -51,12 +51,15 @@ class CeleryBackend(object):
 
 
 class IPythonParallelBackend(object):
-    def __init__(self,client):
+    def __init__(self,client, resolve_like_partial = False):
         self.client = client
+        self.resolve = resolve_like_partial
         self.view = self.client.load_balanced_view(0)
 
     def submit(self,task):
-        return self.view.apply(task.func,*task.args,**task.keywords)
+        if self.resolve:
+            return self.view.apply(task.func,*task.args,**task.keywords)
+        return self.view.apply(task)
 
     def result(self,resultproxy):
         return resultproxy.get()
