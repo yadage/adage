@@ -2,7 +2,7 @@ Adage - A DAG Executor
 
 This is a small experimental package to see how one could describe workflows that are not completely known at definition time.
 
-Tasks are run asynchronously either via a multiprocessing pool or celery
+Tasks are run asynchronously either via a multiprocessing pool or celery or IPython Parallel clusters
 
 Read more at:
 https://github.com/lukasheinrich/adage
