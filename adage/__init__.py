@@ -76,7 +76,7 @@ def update_coroutine(adageobj):
     for i,rule in applicable_rules(adageobj):
         do_apply = yield rule
         if do_apply:
-            log.info('extending graph.')
+            log.debug('extending graph.')
             rule.apply(adageobj)
             adageobj.applied_rules.append(adageobj.rules.pop(i))
         yield
@@ -88,7 +88,7 @@ def update_dag(adageobj,decider):
     anyapplied = False
     update_loop = update_coroutine(adageobj)
     for possible_rule in update_loop:
-        log.info('we could update this with rule: %s',possible_rule)
+        log.debug('we could update this with rule: %s',possible_rule)
         command = decider.send((possible_rule,adageobj))
         if command:
             log.debug('we are in fact updating this..')
@@ -96,7 +96,7 @@ def update_dag(adageobj,decider):
         update_loop.send(command)
     #we changed the state so let's just recurse
     if anyapplied:
-        log.info('we applied a change, so we will recurse to see if we can apply anything else give updated state')
+        log.debug('we applied a change, so we will recurse to see if we can apply anything else give updated state')
         update_dag(adageobj,decider)
 
 def submit_node(nodeobj,backend):
@@ -146,7 +146,7 @@ def yes_man(messagestring = 'received %s and %s'):
     data = yield
     while True:
         rule, state = data
-        log.info(messagestring,rule,state)
+        log.debug(messagestring,rule,state)
         #we yield True and wait again to receive some data
         value = True
         data = yield value
