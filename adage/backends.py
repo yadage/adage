@@ -54,7 +54,7 @@ class IPythonParallelBackend(object):
     def __init__(self,client, resolve_like_partial = False):
         self.client = client
         self.resolve = resolve_like_partial
-        self.view = self.client.load_balanced_view(0)
+        self.view = self.client.load_balanced_view()
 
     def submit(self,task):
         if self.resolve:
