@@ -66,8 +66,8 @@ def submittable_nodes(adageobj):
             continue;
         if dagstate.upstream_ok(dag,nodeobj):
             yield nodeobj
-        if dagstate.upstream_failure(dag,nodeobj):
-            log.debug('not yielding node: %s due to upstream failure',node)
+        # if dagstate.upstream_failure(dag,nodeobj):
+        #     log.debug('not yielding node: %s due to upstream failure',node)
 
 def update_coroutine(adageobj):
     '''
