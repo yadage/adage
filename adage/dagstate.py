@@ -4,6 +4,13 @@ import nodestate
 log = logging.getLogger(__name__)
 
 def node_ran_and_failed(nodeobj):
+    '''
+    :param nodeobj: the node object
+    :return:
+
+        - ``True`` if node has been processed and failed
+        - ``False`` in all other cases
+    '''
     return nodeobj.state == nodestate.FAILED
 
 def upstream_ok(dag,nodeobj):
@@ -30,6 +37,15 @@ def upstream_failure(dag,nodeobj):
     return any(upstream_status)
 
 def node_status(nodeobj):
+    '''
+    boolean check on node status. 
+
+    :param nodeobj: the node object
+    :return:
+
+        - ``True`` if successful (i.e. has beedn submitted, finished processing and exited successfully)
+        - ``False`` in all other cases
+    '''    
     submitted = nodeobj.submit_time
     ready = nodeobj.ready()
     successful = nodeobj.successful()
