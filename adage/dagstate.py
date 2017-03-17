@@ -53,7 +53,7 @@ def node_status(nodeobj):
 
     return submitted and ready and successful
     
-def node_defined_or_waiting(nodeobj):
+def node_defined_or_running(nodeobj):
     running = (nodeobj.state == nodestate.RUNNING)
     defined = (nodeobj.state == nodestate.DEFINED)
     log.debug('defined: %s running %s',defined,running)

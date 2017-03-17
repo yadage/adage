@@ -18,6 +18,13 @@ assert adageobject
 log = logging.getLogger(__name__)
 
 def validate_finished_dag(dag):
+    '''
+    check for correct temporal execution order
+
+    :param dag: graph object
+    :return: ``True`` if order correct, ``False`` otherwise
+    '''
+
     for node in dag:
         nodeobj = dag.getNode(node)
         if nodeobj.submit_time:
@@ -27,9 +34,22 @@ def validate_finished_dag(dag):
     return True
 
 def nodes_left_or_rule_applicable(adageobj):
+    '''
+    :param adageobj: the adage workflow object
+ 
+    Main worklflow status function. It checks whether the overall workflow is finished by checking whether
+    any eligible node (i.e. one without upstream failure) has not yet finished, or if any rules are still
+    applicable.
+    
+    :param adageobj: the adage workflow object
+    :return:
+        - True any eligible node are waiting to be run, or still running or a rule is applicable
+        - False in all other cases.
+    '''
+
     dag,rules = adageobj.dag, adageobj.rules
     nodes_we_could_run = [node for node in dag.nodes() if not dagstate.upstream_failure(dag,dag.getNode(node))]
-    nodes_running_or_defined = [x for x in nodes_we_could_run if dagstate.node_defined_or_waiting(dag.getNode(x))]
+    nodes_running_or_defined = [x for x in nodes_we_could_run if dagstate.node_defined_or_running(dag.getNode(x))]
 
     if any(rule.applicable(adageobj) for rule in rules):
         return True
@@ -39,12 +59,21 @@ def nodes_left_or_rule_applicable(adageobj):
         log.debug('%s nodes that could be run or are running are left.',len(nodes_running_or_defined))
         log.debug('nodes are: %s',[dag.node[n] for n in nodes_running_or_defined])
         return True
-    else:
-        log.info('no nodes can be run anymore')
-        return False
+
+    if any(rule.applicable(adageobj) for rule in rules):
+        return True
+
+
+    log.info('no nodes can be run anymore and no rules are applicable')
+    return False
 
 def applicable_rules(adageobj):
-    '''yields the applicable rules (and their indices in the rules array)'''
+    '''
+    Generator to iterate over applicable rules.
+    yields the applicable rules (and their indices in the rules array)
+
+    :param adageobj: the adage workflow object
+    '''
     for i,rule in reversed([x for x in enumerate(adageobj.rules)]):
         if rule.applicable(adageobj):
             yield i,rule
@@ -53,7 +82,9 @@ def applicable_rules(adageobj):
 
 def submittable_nodes(adageobj):
     '''
-    main generator to go through nodes in the DAG and yields the ones that are submittable
+    main generator to iterate through nodes in the DAG and yield the ones that are submittable
+
+    :param adageobj: the adage workflow object
     '''
     log.debug("process DAG")
     dag = adageobj.dag
@@ -177,8 +208,16 @@ def yes_man(messagestring = 'received %s and %s'):
         value = True
         data = yield value
 
-def trackprogress(trackerlist,adageobj):
-    map(lambda t: t.track(adageobj), trackerlist)
+def trackprogress(trackerlist,adageobj, method = 'track'):
+    '''
+    track adage workflow state using a list of trackers
+
+    :param trackerlist: the stackers which should inspect the workflow
+    :param adageobj: the adage workflow object
+    :param method: tracking method to call. Must be one of ``initialize``, ``track``, ``finalize``
+    :return: None
+    '''
+    map(lambda t: getattr(t,method)(adageobj), trackerlist)
 
 def rundag(adageobj,
            backend = None,
@@ -212,32 +251,34 @@ def rundag(adageobj,
         global log
         log = logging.getLogger(loggername)
 
-    if not workdir:
-        workdir = os.getcwd()
-
     ## funny behavior of multiprocessing Pools means that
     ## we can not have backendsubmit = multiprocsetup(2)    in the function sig
     ## so we only initialize them here
     if not backend:
         from backends import MultiProcBackend
         backend = MultiProcBackend(2)
+
+
+    ## prepare the decision coroutines...
     if not extend_decider:
         extend_decider = yes_man('say yes to graph extension by rule: %s state: %s')
-        extend_decider.next() #prime it..
+        extend_decider.next()
 
     if not submit_decider:
         submit_decider = yes_man('say yes to node submission of: %s%s')
-        submit_decider.next() #prime it..
+        submit_decider.next()
 
+    ## prepare tracking objects
     trackerlist = []
     if default_trackers:
+        if not workdir:
+            workdir = os.getcwd()
         trackerlist = [trackers.SimpleReportTracker(log,trackevery)]
         trackerlist += [trackers.GifTracker(gifname = '{}/workflow.gif'.format(workdir), workdir = '{}/track'.format(workdir))]
         trackerlist += [trackers.TextSnapShotTracker(logfilename = '{}/adagesnap.txt'.format(workdir), mindelta = trackevery)]
     if additional_trackers:
         trackerlist += additional_trackers
 
-    map(lambda t: t.initialize(adageobj), trackerlist)
 
     log.info('preparing adage coroutine.')
     coroutine = adage_coroutine(backend,extend_decider,submit_decider)
@@ -246,20 +287,20 @@ def rundag(adageobj,
     log.info('starting state loop.')
 
     try:
+        trackprogress(trackerlist, adageobj, method = 'initialize')
         for state in coroutine:
             trackprogress(trackerlist,state)
             time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
         raise
+    finally:
+        trackprogress(trackerlist, adageobj, method = 'finalize')
+
+    log.info('adage state loop done.')
 
     if adageobj.rules:
         log.warning('some rules were not applied.')
-
-    log.info('all running jobs are finished.')
-    log.info('track last time')
-
-    map(lambda t: t.finalize(adageobj), trackerlist)
 
     log.info('validating execution')
     if not validate_finished_dag(adageobj.dag):
@@ -267,7 +308,6 @@ def rundag(adageobj,
         raise RuntimeError('DAG execution not validating')
 
     log.info('execution valid. (in terms of execution order)')
-
     if any(adageobj.dag.getNode(x).state == nodestate.FAILED for x in adageobj.dag.nodes()):
         log.error('raising RunTimeError due to failed jobs')
         raise RuntimeError('DAG execution failed')
