@@ -68,21 +68,40 @@ def submittable_nodes(adageobj):
         # if dagstate.upstream_failure(dag,nodeobj):
         #     log.debug('not yielding node: %s due to upstream failure',node)
 
+def apply_rules(adageobj, rules):
+    '''
+    :param adageobj: the adage workflow object
+    :param rules: list of rule to apply
+    :return: None
+
+    applies a number of rules. The order of application is an implementation detail
+    and the client must not assume on any specific of application
+    '''
+    for rule in rules:
+        rule.apply(adageobj)
+
 def update_coroutine(adageobj):
     '''
     loops over applicable coroutines, applies them and manages the bookkeeping (moving rules from 'open' to 'applied')
+    :param adageobj: the adage workflow object
     '''
     for i,rule in applicable_rules(adageobj):
         do_apply = yield rule
         if do_apply:
             log.debug('extending graph.')
-            rule.apply(adageobj)
+            apply_rules(adageobj, [rule])
             adageobj.applied_rules.append(adageobj.rules.pop(i))
         yield
 
 def update_dag(adageobj,decider):
     '''
-    Higher level DAG update routine that calls the basic update loop recursively (in order to apply as many DAG extensions as possible)
+    :param adageobj: the adage workflow object
+    :param decider: a decision coroutine. 
+
+    Higher level DAG update routine that calls the basic update loop recursively (
+    in order to apply as many DAG extensions as possible). The `decider` coroutine will
+    receive a (rule, adageobj) tuple and is expected to return control by yielding
+    a boolean value
     '''
     anyapplied = False
     update_loop = update_coroutine(adageobj)
@@ -99,6 +118,14 @@ def update_dag(adageobj,decider):
         update_dag(adageobj,decider)
 
 def submit_node(nodeobj,backend):
+    '''
+    :param nodeobj: the node object, whose task to submit
+    :param backend: the task execution backend
+    :return: None
+
+    basic submission of a task associated to a given node object
+    '''
+
     nodeobj.resultproxy = backend.submit(nodeobj.task)
     nodeobj.submit_time = time.time()
     if not nodeobj.backend:
@@ -168,6 +195,17 @@ def rundag(adageobj,
     Main adage entrypoint. It's a convenience wrapper around the main adage coroutine loop and
     sets up the backend, logging, tracking (for GIFs, Text Snapshots, etc..) and possible interactive
     hooks into the coroutine
+
+    :param adageobj: the adage workflow object
+    :param backend: the task execution backend to which to submit node tasks
+    :param extend_decider: decision coroutine to deal with whether to extend the workflow graph
+    :param submit_decider: decision coroutine to deal with whether to submit node tasks
+    :param update_interval: minimum looping interval for main adage loop 
+    :param loggername: python logger to use
+    :param trackevery: tracking interval for default simple report tracker
+    :param workdir: workdir for default visual tracker
+    :param default_trackers: whether to enable default trackers (simple report, gif visualization, text snapshot)
+    :param additional_trackers: list of any additional tracking objects
     '''
 
     if loggername:
