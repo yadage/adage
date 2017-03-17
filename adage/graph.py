@@ -5,6 +5,13 @@ import logging
 log = logging.getLogger(__name__)
 class AdageDAG(nx.DiGraph):
     def addTask(self,task, nodename = 'node', depends_on = None):
+        '''
+        add a node based on a task to the DAG
+        :param: task: the task object
+        :param: nodename: name of the node
+        :param: depends_on: list of node objects to be declared as dependencies
+        :return: the newly created node object
+        '''
         node = Node(nodename,task)
         self.addNode(node,depends_on)
         return node
