@@ -16,9 +16,11 @@ def validate_finished_dag(dag):
     for node in dag:
         nodeobj = dag.getNode(node)
         if nodeobj.submit_time:
-            sanity = all([nodeobj.submit_time > dag.getNode(x).ready_by_time for x in dag.predecessors(node)])
-            if not sanity:
-                return False
+            for x in dag.predecessors(node):
+                prednode = dag.getNode(x)
+                if not nodeobj.submit_time > prednode.ready_by_time:
+                    log.error('??? apparently {} was submitted before predesessor was ready: {}'.format(nodeobj, prednode))
+                    return False
     return True
 
 def nodes_left_or_rule_applicable(adageobj):
@@ -96,9 +98,9 @@ def applicable_rules(adageobj):
 
     :param adageobj: the adage workflow object
     '''
-    for i,rule in reversed([x for x in enumerate(adageobj.rules)]):
+    for rule in adageobj.rules:
         if rule.applicable(adageobj):
-            yield i,rule
+            yield rule
         else:
             log.debug('rule %s not ready yet',rule)
 
@@ -111,6 +113,7 @@ def apply_rules(adageobj, rules):
     applies a number of rules. The order of application is an implementation detail
     and the client must not assume on any specific of application
     '''
+
     for rule in rules:
         rule.apply(adageobj)
         rule_index = adageobj.rules.index(rule)
@@ -125,7 +128,6 @@ def sync_state(adageobj):
     :param adageobj: the adage workflow object
     :return: None
     '''
-    log.debug("update DAG")
     for node in adageobj.dag.nodes():
         #check node status one last time so we pick up the finishing times
         dagstate.node_status(adageobj.dag.getNode(node))
@@ -141,5 +143,3 @@ def update_coroutine(adageobj):
             log.debug('extending graph.')
             apply_rules(adageobj, [rule])
         yield
-
-

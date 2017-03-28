@@ -1,31 +1,36 @@
 import adage.controllerutils as ctrlutils
 import logging
 import nodestate
+import contextlib
+import json
+
 log = logging.getLogger(__name__)
 
-class InMemoryController(object):
+class BaseController(object):
     '''
     standard workflow controller, that keeps workflow state in memory at all times without any disk I/O or
     database access.
     '''
 
-    def __init__(self, adageobj, backend):
+    def __init__(self, backend = None):
         '''
-        :param adageobj: the adage workflow object holding rules and the graph
         :param backend: the desired backend to which to submit nodes
         '''
-        self.adageobj = adageobj
         self.backend  = backend
 
     def submit_nodes(self, nodes):
         '''
-        :param nodes: a list of nodes to submit to the backend
+        :param nodes: a list of nodes to submit to the backend. 
+
+        Nodes are expected to be provided in same form as what the controller returns.
         '''
         ctrlutils.submit_nodes(nodes, self.backend)
 
     def apply_rules(self, rules):
         '''
         :param rules: a list of rules to to apply to the workflow graph
+
+        Rules are expected to be provided in same form as what the controller returns.
         '''
         ctrlutils.apply_rules(self.adageobj, rules)
 
@@ -45,6 +50,7 @@ class InMemoryController(object):
         '''
         :return: boolean indicating if nodes or rules are still left to be submitted/applied    
         '''
+        self.sync_backend() #so that we are up to date
         return not ctrlutils.nodes_left_or_rule_applicable(self.adageobj)
 
     def successful(self):
@@ -72,3 +78,7 @@ class InMemoryController(object):
         '''
         return ctrlutils.sync_state(self.adageobj)
 
+class InMemoryController(BaseController):
+    def __init__(self, adageobj, backend):
+        self.adageobj = adageobj
+        super(InMemoryController, self).__init__(backend)

@@ -71,4 +71,5 @@ def dag_from_json(dagdata,nodeclass,proxyclass,backend):
     for x in dagdata['edges']:
         dag.addEdge(dag.getNode(x[0]),dag.getNode(x[1]))
 
+
     return dag

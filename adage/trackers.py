@@ -1,3 +1,4 @@
+import logging
 import time
 import os
 import shutil
@@ -43,7 +44,7 @@ class GifTracker(object):
         os.makedirs(self.workdir)
         for i in range(self.frames+1):
             viz.print_dag(adageobj.dag,'dag_{:02}'.format(i),self.workdir,time = i/float(self.frames))
-        subprocess.call('convert -delay 50 $(ls {}/*.png|sort) {}'.format(self.workdir,self.gifname),shell = True)
+        subprocess.check_call('convert -delay 50 $(ls {}/*.png|sort) {}'.format(self.workdir,self.gifname),shell = True)
         shutil.rmtree(self.workdir)
                 
 class TextSnapShotTracker(object):
@@ -87,8 +88,8 @@ class TextSnapShotTracker(object):
 
         
 class SimpleReportTracker(object):
-    def __init__(self,log,mindelta):
-        self.log = log
+    def __init__(self, loggername, mindelta):
+        self.log = logging.getLogger(loggername)
         self.mindelta = mindelta
         self.last_update = None
         
