@@ -1,8 +1,6 @@
 import adage.controllerutils as ctrlutils
 import logging
 import nodestate
-import contextlib
-import json
 
 log = logging.getLogger(__name__)
 
