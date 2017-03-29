@@ -66,7 +66,7 @@ def rundag(adageobj = None,
            extend_decider = None,
            submit_decider = None,
            update_interval = 0.01,
-           loggername = None,
+           loggername = __name__,
            trackevery = 1,
            workdir = None,
            default_trackers = True,
@@ -94,6 +94,8 @@ def rundag(adageobj = None,
         global log
         log = logging.getLogger(loggername)
 
+
+    log.info('got logger with name: %s', loggername)
     ## get primed coroutine for polling-style workflow execution
     coroutine = setup_polling_execution(extend_decider, submit_decider)
 
