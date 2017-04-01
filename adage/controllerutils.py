@@ -2,6 +2,7 @@ import networkx as nx
 import logging
 import dagstate
 import time
+import datetime
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +21,8 @@ def validate_finished_dag(dag):
                 prednode = dag.getNode(x)
                 if not nodeobj.submit_time > prednode.ready_by_time:
                     log.error('??? apparently {} was submitted before predesessor was ready: {}'.format(nodeobj, prednode))
+                    log.error('node was submitted at: {} {}'.format(datetime.datetime.fromtimestamp(nodeobj.submit_time), nodeobj))
+                    log.error('predecessor finished at: {} {}'.format(datetime.datetime.fromtimestamp(prednode.ready_by_time), prednode))
                     return False
     return True
 

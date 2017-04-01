@@ -61,7 +61,7 @@ def main():
     t = talkative_decider()
     t.next()
 
-    adage.rundag(adageobj, default_trackers = True, trackevery = 5)
+    adage.rundag(adageobj, default_trackers = True, trackevery = 5, maxsteps = 1, update_interval = 5)
 
 if __name__=='__main__':
     main()

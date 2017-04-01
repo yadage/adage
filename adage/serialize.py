@@ -42,6 +42,7 @@ def obj_to_json(adageobj, ruleserializer = noop_ruleserializer, taskserializer =
     return data
 
 def node_to_json(nodeobj,taskserializer,proxyserializer):
+    # log.info('serializing node %s %s',nodeobj.name, proxyserializer(nodeobj.resultproxy))
     nodeinfo = {
         'id':nodeobj.identifier,
         'name':nodeobj.name,

@@ -27,14 +27,30 @@ def trackprogress(trackerlist,adageobj, method = 'track'):
     '''
     map(lambda t: getattr(t,method)(adageobj), trackerlist)
 
-def run_polling_workflow(controller, coroutine, update_interval, trackerlist = None):
+def run_polling_workflow(controller, coroutine, update_interval, trackerlist = None, maxsteps = None):
+    '''
+    run the polling-style workflow by periodically checkinng if a graph can be extended or any noted be submitted
+    runs validation 
+
+    :param controller: the workflow controller
+    :param coroutine: the adage coroutine to step through the workflow
+    :param update_interval: time interval between workflow ticks
+    :param trackerlist
+    
+    :return: None    
+    :raises RuntimeError: if graph is finished and graph validation failed or workflow is failed (nodes unsuccessful)
+    '''
+
     coroutine.send(controller)
     log.info('starting state loop.')
 
     try:
         trackprogress(trackerlist, controller.adageobj, method = 'initialize')
-        for controller in coroutine:
+        for stepnum, controller in enumerate(coroutine):
             trackprogress(trackerlist, controller.adageobj)
+            if maxsteps and (stepnum == maxsteps):
+                log.info('reached number of maximum iterations ({})'.format(maxsteps))
+                return
             time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
@@ -51,6 +67,7 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
     if not controller.successful():
         log.error('raising RunTimeError due to failed jobs')
         raise RuntimeError('DAG execution failed')
+
 
     log.info('workflow completed successfully.')
 
@@ -72,7 +89,7 @@ def rundag(adageobj = None,
            default_trackers = True,
            additional_trackers = None,
            controller = None,
-    ):
+           maxsteps = None):
     '''
     Main adage entrypoint. It's a convenience wrapper around the main adage coroutine loop and
     sets up the backend, logging, tracking (for GIFs, Text Snapshots, etc..) and possible interactive
@@ -89,6 +106,7 @@ def rundag(adageobj = None,
     :param default_trackers: whether to enable default trackers (simple report, gif visualization, text snapshot)
     :param additional_trackers: list of any additional tracking objects
     :param controller: optional external controller (instead of adageobj parameter)
+    :param maxsteps: maximum number of steps in polling-style workflow
     '''
     if loggername:
         global log
@@ -103,7 +121,7 @@ def rundag(adageobj = None,
     trackerlist = default_trackerlist(workdir, loggername, trackevery) if default_trackers else []
     if additional_trackers:
         trackerlist += additional_trackers
-
+    
     if adageobj:
         ## funny behavior of multiprocessing Pools means that
         ## we can not have backendsubmit = multiprocsetup(2)    in the function sig
@@ -115,5 +133,5 @@ def rundag(adageobj = None,
         ## prep controller with backend
         controller = InMemoryController(adageobj, backend)
 
-    run_polling_workflow(controller, coroutine, update_interval, trackerlist)
+    run_polling_workflow(controller, coroutine, update_interval, trackerlist, maxsteps)
 

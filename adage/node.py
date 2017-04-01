@@ -76,7 +76,8 @@ class Node(object):
 
     def successful(self):
         '''public facing method to check for success, ensures that state timestamps and result are in sync'''
-        #if we used _successful directly, people would know that the node is successfully finished
-        #before the internal timestamp is updated, which can be a problem (e.g. in visualization)
+
+        # if we used _successful directly, people would know that the node is successfully finished
+        # before the internal timestamp is updated, which can be a problem (e.g. in visualization)
         self.update_state()
         return self.state == nodestate.SUCCESS

@@ -36,12 +36,14 @@ class BaseController(object):
         '''
         :return: return a list of rules whose predicate is fulfilled
         '''
+        self.sync_backend()
         return ctrlutils.applicable_rules(self.adageobj)
 
     def submittable_nodes(self):
         '''
         :return: a list of nodes with sucessfull and completed upstream
         '''
+        self.sync_backend()
         return ctrlutils.submittable_nodes(self.adageobj)
 
     def finished(self):
@@ -55,6 +57,7 @@ class BaseController(object):
         '''
         :return: boolean indicating workflow execution was successful
         '''
+        self.sync_backend()
         failed = any(self.adageobj.dag.getNode(x).state == nodestate.FAILED for x in self.adageobj.dag.nodes())
         return (not failed)
 

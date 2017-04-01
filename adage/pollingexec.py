@@ -46,7 +46,7 @@ def process_dag(controller,decider):
     '''
     log.debug("process DAG by submitting nodes")
     for nodeobj in controller.submittable_nodes():
-        do_submit = decider.send(controller)
+        do_submit = decider.send((nodeobj,controller))
         if do_submit:
             log.info('submitting %s job',nodeobj)
             controller.submit_nodes([nodeobj])
@@ -70,8 +70,6 @@ def adage_coroutine(extend_decider,submit_decider):
 
     #starting the loop
     while not controller.finished():
-        log.debug("sync backend")
-        controller.sync_backend() # so that we have up-to-date view what's possible
         update_dag(controller, extend_decider)
         process_dag(controller,submit_decider)
         # we're done for this tick, let others proceed
