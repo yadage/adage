@@ -107,7 +107,7 @@ class SimpleReportTracker(object):
 
     def update(self,adageobj):
         dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
-        successful, failed, running, notrun = 0, 0, 0, 0
+        successful, failed, running, unsubmittable = 0, 0, 0, 0
         for node in dag.nodes():
             nodeobj = dag.getNode(node)
             if nodeobj.state == nodestate.RUNNING:
@@ -118,12 +118,12 @@ class SimpleReportTracker(object):
                 failed+=1
                 self.log.error("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.resultproxy)))
             if dagstate.upstream_failure(dag,nodeobj):
-                notrun+=1
-        self.log.info('notrun: {notrun} | running: {running} | successful: {successful} | failed: {failed} | total: {total} | open rules: {rules} | applied rules: {applied}'.format(
+                unsubmittable+=1
+        self.log.info('unsubmittable: {unsubmittable} | submitted: {submitted} | successful: {successful} | failed: {failed} | total: {total} | open rules: {rules} | applied rules: {applied}'.format(
             successful = successful,
             failed = failed,
-            running = running,
-            notrun = notrun,
+            submitted = running,
+            unsubmittable = unsubmittable,
             total =  len(dag.nodes()),
             rules = len(rules),
             applied = len(applied)))
