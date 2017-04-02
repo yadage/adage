@@ -48,7 +48,6 @@ def process_dag(controller,decider):
     for nodeobj in controller.submittable_nodes():
         do_submit = decider.send((nodeobj,controller))
         if do_submit:
-            log.info('submitting %s job',nodeobj)
             controller.submit_nodes([nodeobj])
 
 def adage_coroutine(extend_decider,submit_decider):

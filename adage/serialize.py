@@ -67,6 +67,8 @@ def dag_from_json(dagdata,nodeclass,proxyclass,backend):
         node.ready_by_time = x['timestamps']['ready by']
         node.resultproxy = proxyclass.fromJSON(x['proxy']) if x['proxy'] else None
         node.backend = backend
+        node.update_state()
+        # log.info('deserialized node %s', node)
         dag.addNode(node)
 
     for x in dagdata['edges']:

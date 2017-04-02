@@ -68,8 +68,8 @@ class BaseController(object):
         if not ctrlutils.validate_finished_dag(self.adageobj.dag):
             return False
 
-        if self.adageobj.rules:
-            log.warning('some rules were not applied.')
+        # if self.adageobj.rules:
+        #     log.warning('some rules were not applied.')
 
         return True
 

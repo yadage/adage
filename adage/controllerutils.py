@@ -89,6 +89,7 @@ def submit_nodes(nodeobjs,backend):
     '''
 
     for nodeobj in nodeobjs:
+        # log.info('submitting node %s', nodeobj)
         nodeobj.resultproxy = backend.submit(nodeobj.task)
         nodeobj.submit_time = time.time()
         if not nodeobj.backend:
@@ -118,6 +119,7 @@ def apply_rules(adageobj, rules):
     '''
 
     for rule in rules:
+        # log.info('applying rule %s', rule)
         rule.apply(adageobj)
         rule_index = adageobj.rules.index(rule)
         log.debug('popping rule at index %s', rule_index)
@@ -131,9 +133,10 @@ def sync_state(adageobj):
     :param adageobj: the adage workflow object
     :return: None
     '''
+    # log.info('sync state against backend')
     for node in adageobj.dag.nodes():
         #check node status one last time so we pick up the finishing times
-        dagstate.node_status(adageobj.dag.getNode(node))
+        adageobj.dag.getNode(node).update_state()
 
 def update_coroutine(adageobj):
     '''
