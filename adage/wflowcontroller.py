@@ -57,7 +57,8 @@ class BaseController(object):
         '''
         :return: boolean indicating workflow execution was successful
         '''
-        self.sync_backend()
+        if not self.finished(): #will sync backend here
+            return False
         failed = any(self.adageobj.dag.getNode(x).state == nodestate.FAILED for x in self.adageobj.dag.nodes())
         return (not failed)
 
