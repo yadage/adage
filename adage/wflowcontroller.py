@@ -5,16 +5,36 @@ import nodestate
 log = logging.getLogger(__name__)
 
 class BaseController(object):
-    '''
-    standard workflow controller, that keeps workflow state in memory at all times without any disk I/O or
-    database access.
-    '''
 
-    def __init__(self, backend = None):
+    def __init__(self, adageobj, backend = None):
         '''
         :param backend: the desired backend to which to submit nodes
         '''
+        self._backend  = None
+        self._adageobj = None
+
         self.backend  = backend
+        self.adageobj = adageobj
+
+    @property
+    def adageobj(self):
+        return self._adageobj
+
+    @adageobj.setter
+    def adageobj(self,adageobj):
+        self._adageobj = adageobj
+        if self.backend:
+            ctrlutils.connect_backend(self.adageobj,self.backend)
+
+    @property
+    def backend(self):
+        return self._backend
+
+    @backend.setter
+    def backend(self,backend):
+        self._backend = backend
+        if self.adageobj:
+            ctrlutils.connect_backend(self.adageobj,backend)
 
     def submit_nodes(self, nodes):
         '''
@@ -68,10 +88,6 @@ class BaseController(object):
         '''
         if not ctrlutils.validate_finished_dag(self.adageobj.dag):
             return False
-
-        # if self.adageobj.rules:
-        #     log.warning('some rules were not applied.')
-
         return True
 
     def sync_backend(self):
@@ -81,6 +97,9 @@ class BaseController(object):
         return ctrlutils.sync_state(self.adageobj)
 
 class InMemoryController(BaseController):
-    def __init__(self, adageobj, backend):
-        self.adageobj = adageobj
-        super(InMemoryController, self).__init__(backend)
+    '''
+    standard workflow controller, that keeps workflow state in memory at all times without any disk I/O or
+    database access.
+    '''
+    def __init__(self, adageobj, backend = None):
+        super(InMemoryController, self).__init__(adageobj,backend)

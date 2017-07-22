@@ -48,7 +48,7 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
         trackprogress(trackerlist, controller.adageobj, method = 'initialize')
         for stepnum, controller in enumerate(coroutine):
             trackprogress(trackerlist, controller.adageobj)
-            if maxsteps and (stepnum == maxsteps):
+            if maxsteps and (stepnum+1 == maxsteps):
                 log.info('reached number of maximum iterations ({})'.format(maxsteps))
                 return
             time.sleep(update_interval)

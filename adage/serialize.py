@@ -57,18 +57,18 @@ def node_to_json(nodeobj,taskserializer,proxyserializer):
     }
     return nodeinfo
 
-def dag_from_json(dagdata,nodeclass,proxyclass,backend):
+def dag_from_json(dagdata,nodedeserializer,proxydeserializer,backend):
     dag = adage.graph.AdageDAG()
 
     for x in dagdata['nodes']:
-        node = nodeclass.fromJSON(x)
+        node = nodedeserializer(x)
         node.define_time = x['timestamps']['defined']
         node.submit_time = x['timestamps']['submit']
         node.ready_by_time = x['timestamps']['ready by']
-        node.resultproxy = proxyclass.fromJSON(x['proxy']) if x['proxy'] else None
-        node.backend = backend
-        node.update_state()
-        # log.info('deserialized node %s', node)
+        node.resultproxy = proxydeserializer(x['proxy']) if x['proxy'] else None
+        if backend:
+            node.backend = backend
+            node.update_state()
         dag.addNode(node)
 
     for x in dagdata['edges']:

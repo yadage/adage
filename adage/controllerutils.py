@@ -6,6 +6,11 @@ import datetime
 
 log = logging.getLogger(__name__)
 
+def connect_backend(adageobj,backend):
+    for node in adageobj.dag.nodes():
+        #check node status one last time so we pick up the finishing times
+        adageobj.dag.getNode(node).backend = backend
+
 def validate_finished_dag(dag):
     '''
     check for correct temporal execution order
