@@ -6,7 +6,7 @@ import trackers
 from adage.decorators import adageop, adagetask, Rule
 from adage.adageobject import adageobject
 from adage.pollingexec import setup_polling_execution
-from adage.wflowcontroller import InMemoryController
+from adage.wflowcontroller import BaseController
 
 #silence pyflakes
 assert adageop
@@ -129,7 +129,7 @@ def rundag(adageobj = None,
             backend = MultiProcBackend(2)
 
         ## prep controller with backend
-        controller = InMemoryController(adageobj, backend)
+        controller = BaseController(adageobj, backend)
 
     run_polling_workflow(controller, coroutine, update_interval, trackerlist, maxsteps)
 

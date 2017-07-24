@@ -96,10 +96,3 @@ class BaseController(object):
         '''
         return ctrlutils.sync_state(self.adageobj)
 
-class InMemoryController(BaseController):
-    '''
-    standard workflow controller, that keeps workflow state in memory at all times without any disk I/O or
-    database access.
-    '''
-    def __init__(self, adageobj, backend = None):
-        super(InMemoryController, self).__init__(adageobj,backend)
