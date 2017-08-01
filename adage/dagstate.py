@@ -1,5 +1,5 @@
 import logging
-import nodestate
+import adage.nodestate as nodestate
 
 log = logging.getLogger(__name__)
 

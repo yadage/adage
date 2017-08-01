@@ -1,7 +1,8 @@
-import nodestate
 import time
 import uuid
 import logging
+
+import adage.nodestate as nodestate
 
 log = logging.getLogger(__name__)
 

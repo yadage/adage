@@ -1,7 +1,9 @@
 import json
+import logging
+
 import adage.adageobject
 import adage.graph
-import logging
+
 log = logging.getLogger(__name__)
 
 class DefaultAdageEncoder(json.JSONEncoder):

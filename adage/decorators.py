@@ -56,7 +56,7 @@ def callbackrule(after = None):
         def predicate(adageobj):
             return all([adageobj.dag.getNode(node).successful() for node in after.values()])
         def body(adageobj):
-            depnodes = {k:adageobj.dag.getNode(v) for k,v in after.iteritems()}
+            depnodes = {k:adageobj.dag.getNode(v) for k,v in after.items()}
             func(depnodes = depnodes, adageobj = adageobj)
 
         return Rule(predicate,body)

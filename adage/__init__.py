@@ -1,12 +1,13 @@
 import os
 import time
 import logging
-import trackers
 
 from adage.decorators import adageop, adagetask, Rule
 from adage.adageobject import adageobject
 from adage.pollingexec import setup_polling_execution
 from adage.wflowcontroller import BaseController
+
+import adage.trackers as trackers
 
 #silence pyflakes
 assert adageop

@@ -1,6 +1,7 @@
 import networkx as nx
-from node import Node
 import logging
+
+from .node import Node
 
 log = logging.getLogger(__name__)
 class AdageDAG(nx.DiGraph):

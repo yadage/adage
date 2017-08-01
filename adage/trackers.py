@@ -4,12 +4,12 @@ import os
 import shutil
 import json
 import subprocess
-import dagstate
-import nodestate
 from datetime  import datetime
 import networkx as nx
 import adage.visualize as viz
 import adage.serialize as serialize
+import adage.dagstate as dagstate
+import adage.nodestate as nodestate
 
 class JSONDumpTracker(object):
     def __init__(self,dumpname, serializer = serialize.DefaultAdageEncoder):

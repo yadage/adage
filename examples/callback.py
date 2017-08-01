@@ -16,7 +16,7 @@ another = workflow.dag.addTask(hello.s(one = 'one', two = 'two'))
 
 @adage.decorators.callbackrule(after = {'init': initial.identifier, 'another': another.identifier})
 def schedule(depnodes, adageobj):
-    results = {k:v.result for k,v in depnodes.iteritems()}
+    results = {k:v.result for k,v in depnodes.items()}
     parts = results['init'].split()
     for i,p in enumerate(parts):
         adageobj.dag.addTask(hello.s(one = 'part {}'.format(i), two = p), nodename = p, depends_on = depnodes.values())

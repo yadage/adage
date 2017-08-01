@@ -1,7 +1,8 @@
 import networkx as nx
 import subprocess
-import nodestate
 import datetime
+
+import adage.nodestate as nodestate
 
 def node_visible(nodeobj,time):
     return time > nodeobj.define_time

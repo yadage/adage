@@ -11,7 +11,7 @@ def decide(task_id):
         print 'ok we will extend.'
     return shall
 
-for identifier,proxy in x['proxies'].iteritems():
+for identifier,proxy in x['proxies'].items():
     if x['proxystate'][identifier] == 'CREATED':
         print 
         newresult = {'hello':'this is result number: {}'.format(identifier)}

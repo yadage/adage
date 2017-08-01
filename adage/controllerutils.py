@@ -1,8 +1,8 @@
 import networkx as nx
 import logging
-import dagstate
 import time
 import datetime
+import adage.dagstate as dagstate
 
 log = logging.getLogger(__name__)
 
