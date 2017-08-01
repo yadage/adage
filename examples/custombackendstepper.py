@@ -25,6 +25,11 @@ def decide_step(dag,nodeobj):
         print 'do not submit for now'
     return shall
 
+def advance_coroutine(coroutine):
+    try:
+        return coroutine.next()
+    except AttributeError:
+        return coroutine.__next__()
 
 def custom_decider(decide_func):
     # we yield until we receive some data via send()
@@ -35,17 +40,17 @@ def custom_decider(decide_func):
     return decider
 
 extend_decider = custom_decider(decide_rule)()
-extend_decider.next() #prime decider
+advance_coroutine(extend_decider) #prime decider
 
 submit_decider = custom_decider(decide_step)()
-submit_decider.next() #prime decider
+advance_coroutine(submit_decider) #prime decider
 
 coroutine = adage.adage_coroutine(backend,extend_decider,submit_decider)
-coroutine.next()      #prime the coroutine....
+advance_coroutine(coroutine)      #prime the coroutine....
 coroutine.send(state)
 
 try:
-    state = coroutine.next()
+    state = advance_coroutine(coroutine)
     custombackend.save(state,custombackend.CustomJSONEncoder)
 except StopIteration:
     custombackend.save(state,custombackend.CustomJSONEncoder)

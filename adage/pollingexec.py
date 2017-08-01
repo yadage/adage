@@ -2,6 +2,12 @@ import logging
 
 log = logging.getLogger(__name__)
 
+def advance_coroutine(coroutine):
+    try:
+        return coroutine.next()
+    except AttributeError:
+        return coroutine.__next__()
+
 def update_coroutine(controller):
     '''
     loops over applicable coroutines, applies them and manages the bookkeeping (moving rules from 'open' to 'applied')
@@ -97,15 +103,15 @@ def setup_polling_execution(extend_decider = None, submit_decider = None):
 
     if not extend_decider:
         extend_decider = yes_man('say yes to graph extension by %s')
-        extend_decider.next() # prime
+        advance_coroutine(extend_decider) # prime
 
     if not submit_decider:
         submit_decider = yes_man('say yes to node submission of: %s')
-        submit_decider.next() # prime
+        advance_coroutine(submit_decider) # prime
 
     ## prep main coroutine with deciders..
     log.info('preparing adage coroutine.')
     coroutine = adage_coroutine(extend_decider,submit_decider)
-    coroutine.next() # prime the coroutine....
+    advance_coroutine(coroutine) # prime the coroutine....
 
     return coroutine
