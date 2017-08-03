@@ -5,7 +5,7 @@ python:
 
 # command to install dependencies
 install:
-  - pip install . --process-dependency-links
+  - pip install .[viz] --process-dependency-links
   - pip install pyflakes
   - sudo apt-get update
   - sudo apt-get install -y graphviz
