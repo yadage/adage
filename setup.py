@@ -8,9 +8,13 @@ setup(
     description = 'running dynamic DAG workflows',
     packages = find_packages(),
     install_requires = [
-        'networkx',
-        'pydot2',
-        'pygraphviz',
-        'pydotplus'
-    ]
+        'networkx'
+    ],
+    extras_require = {
+        'viz' : [
+            'pydot2',
+            'pygraphviz',
+            'pydotplus'
+        ]
+    },
 )
