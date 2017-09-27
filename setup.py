@@ -8,7 +8,7 @@ setup(
     description = 'running dynamic DAG workflows',
     packages = find_packages(),
     install_requires = [
-        'networkx'
+        'networkx==1.11'
     ],
     extras_require = {
         'viz' : [
