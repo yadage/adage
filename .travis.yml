@@ -13,6 +13,8 @@ install:
 script:
 - pyflakes adage
 - pytest --cov=adage
+after_success:
+- coveralls
 jobs:
   include:
     - stage: deploy
