@@ -9,8 +9,6 @@ install:
 - sudo apt-get install -y imagemagick
 - sudo apt-get install -y graphviz
 - sudo apt-get install -y python-logilab-common
-- pip install -U --process-dependency-links -e .[viz,develop,celery]
-- pip install sphinx
 - pip install .[viz,develop] --process-dependency-links
 script:
 - pyflakes adage
