@@ -126,7 +126,7 @@ def rundag(adageobj = None,
         ## we can not have backendsubmit = multiprocsetup(2)    in the function sig
         ## so we only initialize them here
         if not backend:
-            from backends import MultiProcBackend
+            from .backends import MultiProcBackend
             backend = MultiProcBackend(2)
 
         ## prep controller with backend
