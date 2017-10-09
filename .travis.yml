@@ -12,7 +12,7 @@ install:
 - pip install .[viz,develop] --process-dependency-links
 script:
 - pyflakes adage
-- pytest --cov=adage
+- pytest
 after_success:
 - coveralls
 jobs:
