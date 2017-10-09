@@ -1,15 +1,17 @@
-sudo: required
 language: python
 python:
-  - "2.7"
-
-# command to install dependencies
+- '2.7'
+- '3.3'
+- '3.4'
+- '3.5'
+- '3.6'
 install:
-  - pip install .[viz] --process-dependency-links
-  - pip install pyflakes
-  - sudo apt-get update
-  - sudo apt-get install -y graphviz
-  - sudo apt-get install -y imagemagick
+- sudo apt-get install -y imagemagick
+- sudo apt-get install -y graphviz
+- sudo apt-get install -y python-logilab-common
+- pip install -U --process-dependency-links -e .[viz,develop,celery]
+- pip install sphinx
+- pip install .[viz,develop] --process-dependency-links
 script:
-  - pyflakes adage
-  - python examples/simple.py
+- pyflakes adage
+- pytest --cov=adage
