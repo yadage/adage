@@ -13,3 +13,14 @@ install:
 script:
 - pyflakes adage
 - pytest --cov=adage
+jobs:
+  include:
+    - stage: deploy
+      deploy:
+        provider: pypi
+        password:
+          secure: "J5IaoJ8E6NB5be9gbx9Ui7GZuONpTWIHnUUX4t9wcoJRZKH304OUeq+n8DhouXmN4h/gpdzxzVKeq0U4u4zl4yhs6wUFdEVNSr7HS3v79AYukBNLfXZAEE1WsN9dvTYZwZYC3/D0lhawaDqmpO5BdkCeGhGlG5cgHeFaZFBSs5U="
+        username:
+          secure: "GvujFFMM6kdTUG9Eb2BV5kKhwC0Hp2507MLQY7vfPo3smcqG1a6V9q+mW0/W2SsutBMo1zNVEL99tIJcf0je2TmZQi9EUTEq37trkhPMhOiIZaOu0SwEL9+Vsig2xUDlJMvIo86f7SNb3Ckl6wlbxWl1eFNfWcKd87zVrf55fO0="
+        on:
+          tags: true
