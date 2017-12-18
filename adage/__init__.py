@@ -17,7 +17,7 @@ assert adageobject
 
 log = logging.getLogger(__name__)
 
-def trackprogress(trackerlist,adageobj, method = 'track'):
+def trackprogress(trackerlist, controller, method = 'track'):
     '''
     track adage workflow state using a list of trackers
 
@@ -26,19 +26,19 @@ def trackprogress(trackerlist,adageobj, method = 'track'):
     :param method: tracking method to call. Must be one of ``initialize``, ``track``, ``finalize``
     :return: None
     '''
-    map(lambda t: getattr(t,method)(adageobj), trackerlist)
+    map(lambda t: getattr(t,method)(controller.adageobj), trackerlist)
 
 def run_polling_workflow(controller, coroutine, update_interval, trackerlist = None, maxsteps = None):
     '''
     run the polling-style workflow by periodically checkinng if a graph can be extended or any noted be submitted
-    runs validation 
+    runs validation
 
     :param controller: the workflow controller
     :param coroutine: the adage coroutine to step through the workflow
     :param update_interval: time interval between workflow ticks
     :param trackerlist
-    
-    :return: None    
+
+    :return: None
     :raises RuntimeError: if graph is finished and graph validation failed or workflow is failed (nodes unsuccessful)
     '''
 
@@ -46,9 +46,9 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
     log.info('starting state loop.')
 
     try:
-        trackprogress(trackerlist, controller.adageobj, method = 'initialize')
+        trackprogress(trackerlist, controller, method = 'initialize')
         for stepnum, controller in enumerate(coroutine):
-            trackprogress(trackerlist, controller.adageobj)
+            trackprogress(trackerlist, controller)
             if maxsteps and (stepnum+1 == maxsteps):
                 log.info('reached number of maximum iterations ({})'.format(maxsteps))
                 return
@@ -57,7 +57,7 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
         log.exception('some weird exception caught in adage process loop')
         raise
     finally:
-        trackprogress(trackerlist, controller.adageobj, method = 'finalize')
+        trackprogress(trackerlist, controller, method = 'finalize')
 
     log.info('adage state loop done.')
 
@@ -100,7 +100,7 @@ def rundag(adageobj = None,
     :param backend: the task execution backend to which to submit node tasks
     :param extend_decider: decision coroutine to deal with whether to extend the workflow graph
     :param submit_decider: decision coroutine to deal with whether to submit node tasks
-    :param update_interval: minimum looping interval for main adage loop 
+    :param update_interval: minimum looping interval for main adage loop
     :param loggername: python logger to use
     :param trackevery: tracking interval for default simple report tracker
     :param workdir: workdir for default visual tracker
@@ -120,7 +120,7 @@ def rundag(adageobj = None,
     trackerlist = default_trackerlist(workdir, loggername, trackevery) if default_trackers else []
     if additional_trackers:
         trackerlist += additional_trackers
-    
+
     if adageobj:
         ## funny behavior of multiprocessing Pools means that
         ## we can not have backendsubmit = multiprocsetup(2)    in the function sig
@@ -133,4 +133,3 @@ def rundag(adageobj = None,
         controller = BaseController(adageobj, backend)
 
     run_polling_workflow(controller, coroutine, update_interval, trackerlist, maxsteps)
-
