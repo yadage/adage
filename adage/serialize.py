@@ -1,6 +1,7 @@
 import json
 import logging
 
+import adage.nodestate
 import adage.adageobject
 import adage.graph
 
@@ -68,6 +69,9 @@ def dag_from_json(dagdata,nodedeserializer,proxydeserializer,backend):
         node.submit_time = x['timestamps']['submit']
         node.ready_by_time = x['timestamps']['ready by']
         node.resultproxy = proxydeserializer(x['proxy']) if x['proxy'] else None
+
+        #respect the JSON state -- if you want a new one connect a backend
+        node._state = getattr(adage.nodestate,x['state'])
         if backend:
             node.backend = backend
             node.update_state()
