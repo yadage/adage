@@ -16,18 +16,21 @@ class AdageDAG(nx.DiGraph):
         node = Node(nodename,task)
         self.addNode(node,depends_on)
         return node
-    
+
     def addNode(self,nodeobj,depends_on = None):
         self.add_node(nodeobj.identifier, {'nodeobj': nodeobj})
         for parent in (depends_on or []):
             self.addEdge(parent,nodeobj)
-        
+
+    def removeNode(self,nodeobj):
+        self.remove_node(nodeobj.identifier)
+
     def addEdge(self,fromobj,toobj):
         self.add_edge(fromobj.identifier,toobj.identifier)
 
     def getNode(self,ident):
         return self.node[ident]['nodeobj']
-        
+
     def getNodeByName(self,name):
         matching = [x for x in self.nodes() if self.getNode(x).name == name]
         if len(matching) > 1:

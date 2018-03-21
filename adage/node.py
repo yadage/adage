@@ -57,6 +57,11 @@ class Node(object):
 
     @property
     def result(self):
+        if self._result is None:
+            log.warning(
+                'result requested but it is None proxy: %s, backend: %s',
+                self.resultproxy, self.backend
+            )
         return self._result
 
     @property
