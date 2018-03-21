@@ -38,7 +38,7 @@ class BaseController(object):
 
     def submit_nodes(self, nodes):
         '''
-        :param nodes: a list of nodes to submit to the backend. 
+        :param nodes: a list of nodes to submit to the backend.
 
         Nodes are expected to be provided in same form as what the controller returns.
         '''
@@ -68,7 +68,7 @@ class BaseController(object):
 
     def finished(self):
         '''
-        :return: boolean indicating if nodes or rules are still left to be submitted/applied    
+        :return: boolean indicating if nodes or rules are still left to be submitted/applied
         '''
         self.sync_backend() #so that we are up to date
         return not ctrlutils.nodes_left_or_rule_applicable(self.adageobj)
@@ -95,4 +95,3 @@ class BaseController(object):
         :return: synchronize with backend to update workflow state
         '''
         return ctrlutils.sync_state(self.adageobj)
-
