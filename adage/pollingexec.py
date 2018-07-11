@@ -20,10 +20,10 @@ def update_coroutine(controller):
             controller.apply_rules([rule])
         yield
 
-def update_dag(controller, decider):
+def update_dag(controller, decider, recurse):
     '''
     :param controller: the adage workflow controller
-    :param decider: a decision coroutine. 
+    :param decider: a decision coroutine.
 
     Higher level DAG update routine that calls the basic update loop recursively (
     in order to apply as many DAG extensions as possible). The `decider` coroutine will
@@ -41,9 +41,9 @@ def update_dag(controller, decider):
             anyapplied = True
         update_loop.send(command)
     #we changed the state so let's just recurse
-    if anyapplied:
+    if anyapplied and recurse:
         log.debug('we applied a change, so we will recurse to see if we can apply anything else give updated state')
-        update_dag(controller, decider)
+        update_dag(controller, decider, recurse)
 
 
 def process_dag(controller,decider):
@@ -56,7 +56,7 @@ def process_dag(controller,decider):
         if do_submit:
             controller.submit_nodes([nodeobj])
 
-def adage_coroutine(extend_decider,submit_decider):
+def adage_coroutine(extend_decider,submit_decider,recursive_updates):
     '''
     :param extend_decider: decision coroutine to decide whether to apply applicable rules
     :param submit_decider: decision coroutine to decide whether to submit applicable nodes
@@ -75,7 +75,7 @@ def adage_coroutine(extend_decider,submit_decider):
 
     #starting the loop
     while not controller.finished():
-        update_dag(controller, extend_decider)
+        update_dag(controller, extend_decider,recursive_updates)
         process_dag(controller,submit_decider)
         # we're done for this tick, let others proceed
         yield controller
@@ -91,10 +91,13 @@ def yes_man(messagestring = 'saying yes.'):
         value = True
         data = yield value
 
-def setup_polling_execution(extend_decider = None, submit_decider = None):
+def setup_polling_execution(
+    extend_decider = None,
+    submit_decider = None,
+    recursive_updates = True):
     '''
     sets up the main couroutine and auxiliary decision coroutines for polling-style
-    workflow exectuion. Optionally decision coroutines can be passed as parameters 
+    workflow exectuion. Optionally decision coroutines can be passed as parameters
     (must already be primed)
 
     :param extend_decider: decision coroutine to decide whether to apply applicable rules
@@ -111,7 +114,7 @@ def setup_polling_execution(extend_decider = None, submit_decider = None):
 
     ## prep main coroutine with deciders..
     log.info('preparing adage coroutine.')
-    coroutine = adage_coroutine(extend_decider,submit_decider)
+    coroutine = adage_coroutine(extend_decider,submit_decider, recursive_updates)
     advance_coroutine(coroutine) # prime the coroutine....
 
     return coroutine
