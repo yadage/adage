@@ -64,4 +64,4 @@ def test_simpleexample():
     adage.rundag(adageobj, default_trackers = True)
 
     data = adage.serialize.obj_to_json(adageobj)
-    adage.serialize.dag_from_json(data['dag'], lambda n: adage.node.Node(n['name'],n['task'],n['id']), lambda p: None, None)
+    adage.serialize.dag_from_json(data['dag'], lambda n: adage.node.Node(n['name'],n['task'],n['id']))
