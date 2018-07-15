@@ -60,8 +60,8 @@ def test_simpleexample():
                 adageobj.dag.addTask(task.s(one = 'nested new'), nodename = 'the')
     adageobj = adage.adageobject()
     adageobj.rules.append(x)
-    adage.serialize.obj_to_json(adageobj)
+    adage.serialize.obj_to_json(adageobj, lambda r: None, lambda n: None)
     adage.rundag(adageobj, default_trackers = True)
 
-    data = adage.serialize.obj_to_json(adageobj)
-    adage.serialize.dag_from_json(data['dag'], lambda n: adage.node.Node(n['name'],n['task'],n['id']), lambda p: None, None)
+    data = adage.serialize.obj_to_json(adageobj,lambda r: None, lambda n: adage.serialize.node_to_json(n,lambda t: {}, lambda p: {}))
+    adage.serialize.dag_from_json(data['dag'], lambda n: adage.node.Node(n['name'],n['task'],n['id']))

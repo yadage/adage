@@ -13,6 +13,7 @@ def update_coroutine(controller):
     loops over applicable coroutines, applies them and manages the bookkeeping (moving rules from 'open' to 'applied')
     :param controller: the adage workflow controller
     '''
+
     for rule in controller.applicable_rules():
         do_apply = yield rule
         if do_apply:
@@ -43,6 +44,7 @@ def update_dag(controller, decider, recurse):
     #we changed the state so let's just recurse
     if anyapplied and recurse:
         log.debug('we applied a change, so we will recurse to see if we can apply anything else give updated state')
+        controller.sync_backend() #so that we are up to date
         update_dag(controller, decider, recurse)
 
 
@@ -51,10 +53,14 @@ def process_dag(controller,decider):
     main loop to go through nodes in the DAG and submit the onces that are submittable
     '''
     log.debug("process DAG by submitting nodes")
+    nodes = []
     for nodeobj in controller.submittable_nodes():
         do_submit = decider.send((nodeobj,controller))
         if do_submit:
-            controller.submit_nodes([nodeobj])
+            nodes.append(nodeobj)
+    if nodes:
+        log.info('submitting nodes %s', nodes)
+        controller.submit_nodes(nodes)
 
 def adage_coroutine(extend_decider,submit_decider,recursive_updates):
     '''
@@ -75,6 +81,7 @@ def adage_coroutine(extend_decider,submit_decider,recursive_updates):
 
     #starting the loop
     while not controller.finished():
+        controller.sync_backend() #so that we are up to date
         update_dag(controller, extend_decider,recursive_updates)
         process_dag(controller,submit_decider)
         # we're done for this tick, let others proceed

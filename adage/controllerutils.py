@@ -34,11 +34,11 @@ def validate_finished_dag(dag):
 def nodes_left_or_rule_applicable(adageobj):
     '''
     :param adageobj: the adage workflow object
- 
+
     Main worklflow status function. It checks whether the overall workflow is finished by checking whether
     any eligible node (i.e. one without upstream failure) has not yet finished, or if any rules are still
     applicable.
-    
+
     :param adageobj: the adage workflow object
     :return:
         - True any eligible node are waiting to be run, or still running or a rule is applicable
@@ -97,8 +97,6 @@ def submit_nodes(nodeobjs,backend):
         # log.info('submitting node %s', nodeobj)
         nodeobj.resultproxy = backend.submit(nodeobj.task)
         nodeobj.submit_time = time.time()
-        if not nodeobj.backend:
-            nodeobj.backend = backend
 
 def applicable_rules(adageobj):
     '''
@@ -131,7 +129,7 @@ def apply_rules(adageobj, rules):
         adageobj.applied_rules.append(adageobj.rules.pop(rule_index))
 
 
-def sync_state(adageobj):
+def sync_state(adageobj,backend = None):
     '''
     Synchronize with Backend to update node processing status
 
@@ -141,7 +139,7 @@ def sync_state(adageobj):
     # log.info('sync state against backend')
     for node in adageobj.dag.nodes():
         #check node status one last time so we pick up the finishing times
-        adageobj.dag.getNode(node).update_state()
+        adageobj.dag.getNode(node).update_state(backend = backend)
 
 def update_coroutine(adageobj):
     '''

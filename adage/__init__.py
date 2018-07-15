@@ -48,10 +48,12 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
     try:
         trackprogress(trackerlist, controller, method = 'initialize')
         for stepnum, controller in enumerate(coroutine):
+            log.debug('polling step begin')
             trackprogress(trackerlist, controller)
             if maxsteps and (stepnum+1 == maxsteps):
                 log.info('reached number of maximum iterations ({})'.format(maxsteps))
                 return
+            log.debug('polling step end')
             time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
@@ -116,6 +118,7 @@ def rundag(adageobj = None,
         log = logging.getLogger(loggername)
 
     ## get primed coroutine for polling-style workflow execution
+    # recursive_updates = False
     coroutine = setup_polling_execution(extend_decider, submit_decider,recursive_updates)
 
     ## prepare tracking objects

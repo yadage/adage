@@ -23,14 +23,14 @@ def noop_proxyserializer(proxy):
 def noop_ruleserializer(rule):
     return 'unserializable_rule'
 
-def obj_to_json(adageobj, ruleserializer = noop_ruleserializer, taskserializer = noop_taskserializer, proxyserializer = noop_proxyserializer):
+def obj_to_json(adageobj, ruleserializer, nodeserializer):
     dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
     data = {'dag':None, 'rules':None, 'applied':None}
 
     data['dag'] = {'nodes':[], 'edges': []}
     for node in dag.nodes():
         nodeobj = dag.getNode(node)
-        data['dag']['nodes']+=[node_to_json(nodeobj,taskserializer,proxyserializer)]
+        data['dag']['nodes']+=[nodeserializer(nodeobj)]
 
     data['dag']['edges'] += dag.edges()
 
@@ -60,21 +60,18 @@ def node_to_json(nodeobj,taskserializer,proxyserializer):
     }
     return nodeinfo
 
-def dag_from_json(dagdata,nodedeserializer,proxydeserializer,backend):
+def set_generic_data(node, data):
+    node.define_time = data['timestamps']['defined']
+    node.submit_time = data['timestamps']['submit']
+    node.ready_by_time = data['timestamps']['ready by']
+    node._state = getattr(adage.nodestate,data['state'])
+
+
+def dag_from_json(dagdata,nodedeserializer):
     dag = adage.graph.AdageDAG()
 
     for x in dagdata['nodes']:
         node = nodedeserializer(x)
-        node.define_time = x['timestamps']['defined']
-        node.submit_time = x['timestamps']['submit']
-        node.ready_by_time = x['timestamps']['ready by']
-        node.resultproxy = proxydeserializer(x['proxy']) if x['proxy'] else None
-
-        #respect the JSON state -- if you want a new one connect a backend
-        node._state = getattr(adage.nodestate,x['state'])
-        if backend:
-            node.backend = backend
-            node.update_state()
         dag.addNode(node)
 
     for x in dagdata['edges']:
