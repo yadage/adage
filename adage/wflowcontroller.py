@@ -91,4 +91,4 @@ class BaseController(object):
         '''
         :return: synchronize with backend to update workflow state
         '''
-        return ctrlutils.sync_state(self.adageobj)
+        return ctrlutils.sync_state(self.adageobj,self.backend)

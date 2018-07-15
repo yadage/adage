@@ -18,10 +18,10 @@ class JSONDumpTracker(object):
 
     def initialize(self,adageobj):
         pass
-        
+
     def track(self,adageobj):
         pass
-    
+
     def finalize(self,adageobj):
         with open(self.dumpname,'w') as dumpfile:
             json.dump(adageobj,dumpfile, cls = self.serializer)
@@ -31,13 +31,13 @@ class GifTracker(object):
         self.gifname = gifname
         self.workdir = workdir
         self.frames = frames
-        
+
     def initialize(self,adageobj):
         pass
-        
+
     def track(self,adageobj):
         pass
-        
+
     def finalize(self,adageobj):
         if os.path.exists(self.workdir):
             shutil.rmtree(self.workdir)
@@ -46,7 +46,7 @@ class GifTracker(object):
             viz.print_dag(adageobj.dag,'dag_{:02}'.format(i),self.workdir,time = i/float(self.frames))
         subprocess.check_call('convert -delay 50 $(ls {}/*.png|sort) {}'.format(self.workdir,self.gifname),shell = True)
         shutil.rmtree(self.workdir)
-                
+
 class TextSnapShotTracker(object):
     def __init__(self,logfilename,mindelta):
         self.logfilename = logfilename
@@ -86,13 +86,13 @@ class TextSnapShotTracker(object):
             timenow = datetime.now().isoformat()
             logfile.write('========== ADAGE LOG END at {} ==========\n'.format(timenow))
 
-        
+
 class SimpleReportTracker(object):
     def __init__(self, loggername, mindelta):
         self.log = logging.getLogger(loggername)
         self.mindelta = mindelta
         self.last_update = None
-        
+
     def initialize(self,adageobj):
         pass
 
@@ -101,7 +101,7 @@ class SimpleReportTracker(object):
         if not self.last_update or (now-self.last_update) > self.mindelta:
             self.last_update = now
             self.update(adageobj)
-    
+
     def finalize(self,adageobj):
         self.update(adageobj)
 
@@ -116,7 +116,8 @@ class SimpleReportTracker(object):
                 successful+=1
             if dagstate.node_ran_and_failed(nodeobj):
                 failed+=1
-                self.log.error("node: {} failed. reason: {}".format(nodeobj,nodeobj.backend.fail_info(nodeobj.resultproxy)))
+                reason = nodeobj.backend.fail_info(nodeobj.resultproxy) if nodeobj.backend else 'unknown'
+                self.log.error("node: {} failed. reason: {}".format(nodeobj,reason))
             if dagstate.upstream_failure(dag,nodeobj):
                 unsubmittable+=1
         self.log.info('unsubmittable: {unsubmittable} | submitted: {submitted} | successful: {successful} | failed: {failed} | total: {total} | open rules: {rules} | applied rules: {applied}'.format(
@@ -127,4 +128,3 @@ class SimpleReportTracker(object):
             total =  len(dag.nodes()),
             rules = len(rules),
             applied = len(applied)))
-        

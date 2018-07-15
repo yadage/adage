@@ -28,25 +28,29 @@ class Node(object):
     def __repr__(self):
         return '<Node name: {} id: {} state: {}>'.format(self.name,self.identifier,self.state)
 
-    def update_state(self):
+    def update_state(self,backend = None):
         #if we do not have a result object
         #that means it's not submitted yet
         if not self.resultproxy:
             self._state = nodestate.DEFINED
             return
 
+        backend = self.backend or backend
+        if not backend:
+            raise RuntimeError('no backend to update state against')
+
         #if we have a resultobject
         #but the result is not ready
         #the node is still running
-        if not self.backend.ready(self.resultproxy):
+        if not backend.ready(self.resultproxy):
             self._state = nodestate.RUNNING
             return
 
         #if it's ready it's either successful
         #or failed
-        if self.backend.successful(self.resultproxy):
+        if backend.successful(self.resultproxy):
             self._state  = nodestate.SUCCESS
-            self._result = self.backend.result(self.resultproxy)
+            self._result = backend.result(self.resultproxy)
         else:
             self._state = nodestate.FAILED
 
