@@ -56,21 +56,18 @@ class BaseController(object):
         '''
         :return: return a list of rules whose predicate is fulfilled
         '''
-        self.sync_backend()
         return ctrlutils.applicable_rules(self.adageobj)
 
     def submittable_nodes(self):
         '''
         :return: a list of nodes with sucessfull and completed upstream
         '''
-        self.sync_backend()
         return ctrlutils.submittable_nodes(self.adageobj)
 
     def finished(self):
         '''
         :return: boolean indicating if nodes or rules are still left to be submitted/applied
         '''
-        self.sync_backend() #so that we are up to date
         return not ctrlutils.nodes_left_or_rule_applicable(self.adageobj)
 
     def successful(self):

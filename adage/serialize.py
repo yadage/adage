@@ -23,14 +23,14 @@ def noop_proxyserializer(proxy):
 def noop_ruleserializer(rule):
     return 'unserializable_rule'
 
-def obj_to_json(adageobj, ruleserializer = noop_ruleserializer, taskserializer = noop_taskserializer, proxyserializer = noop_proxyserializer):
+def obj_to_json(adageobj, ruleserializer, nodeserializer):
     dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
     data = {'dag':None, 'rules':None, 'applied':None}
 
     data['dag'] = {'nodes':[], 'edges': []}
     for node in dag.nodes():
         nodeobj = dag.getNode(node)
-        data['dag']['nodes']+=[node_to_json(nodeobj,taskserializer,proxyserializer)]
+        data['dag']['nodes']+=[nodeserializer(nodeobj)]
 
     data['dag']['edges'] += dag.edges()
 

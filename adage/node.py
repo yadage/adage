@@ -7,7 +7,7 @@ import adage.nodestate as nodestate
 log = logging.getLogger(__name__)
 
 class Node(object):
-    def __init__(self,name,task,identifier = None, define_time = None):
+    def __init__(self,name,task,identifier = None, define_time = None, result = None):
         self.identifier = identifier or str(uuid.uuid4())
         self.name = name
         self.task = task
@@ -22,7 +22,7 @@ class Node(object):
 
         # relevant state data
         self.resultproxy = None
-        self._result = None
+        self._result = result
         self._state = nodestate.DEFINED
 
     def __repr__(self):
