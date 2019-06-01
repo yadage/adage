@@ -62,7 +62,7 @@ def colorize_graph_at_time(dag,time):
 def save_dot(dotstring,filename,fileformat):
     with open(filename,'w') as dotoutputfile:
         p = subprocess.Popen(['dot','-T{}'.format(fileformat),'-Gsize=18,12\!','-Gdpi=100'], stdout = dotoutputfile, stdin = subprocess.PIPE)
-        p.communicate(dotstring)
+        p.communicate(dotstring.encode('ascii'))
 
 def print_dag(dag,name,trackdir,time = None):
     pngfilename = '{}/{}.png'.format(trackdir,name)
