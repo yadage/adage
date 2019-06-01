@@ -26,7 +26,8 @@ def trackprogress(trackerlist, controller, method = 'track'):
     :param method: tracking method to call. Must be one of ``initialize``, ``track``, ``finalize``
     :return: None
     '''
-    map(lambda t: getattr(t,method)(controller.adageobj), trackerlist)
+    for t in trackerlist:
+        getattr(t,method)(controller.adageobj)
 
 def run_polling_workflow(controller, coroutine, update_interval, trackerlist = None, maxsteps = None):
     '''
