@@ -13,12 +13,13 @@ def state_at_time(nodeobj,time):
     ready_by   = nodeobj.ready_by_time
     if time < defined:
         return None
-    if defined <= time < submitted:
+    if submitted and defined <= time < submitted:
         return nodestate.DEFINED
-    if submitted <= time < ready_by:
+    if ready_by and submitted <= time < ready_by:
         return nodestate.RUNNING
-    if ready_by <= time:
+    if ready_by and ready_by <= time:
         return nodeobj.state
+    return nodestate.DEFINED
 
 def colorize_graph(dag,normtime = None):
     allnodes = dag.nodes()
