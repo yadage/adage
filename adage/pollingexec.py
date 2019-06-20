@@ -56,6 +56,7 @@ def process_dag(controller,decider):
     nodes = []
     for nodeobj in controller.submittable_nodes():
         do_submit = decider.send((nodeobj,controller))
+        log.debug('node submittable %s and decision to submit %s', nodeobj, do_submit)
         if do_submit:
             nodes.append(nodeobj)
     if nodes:
@@ -80,7 +81,13 @@ def adage_coroutine(extend_decider,submit_decider,finish_decider,recursive_updat
     yield
 
     #starting the loop
-    while not finish_decider.send(controller):
+    while True:
+        finished, success = finish_decider.send(controller)
+        log.debug('workflow status finished: %s status: %s', finished, success)
+        if finished:
+            if not success:
+                raise RuntimeError('workflow finished but failed')
+            return
         controller.sync_backend() #so that we are up to date
         update_dag(controller, extend_decider,recursive_updates)
         process_dag(controller,submit_decider)
@@ -103,9 +110,9 @@ def standard_stop_decider():
     while True:
         log.debug('deciding if to finish: %s',data)
         #we yield True and wait again to receive some data
-        value = data.finished()
-        data = yield value
-
+        success = data.successful()
+        value   = data.finished()
+        data = yield (value, success)
 
 def setup_polling_execution(
     extend_decider = None,

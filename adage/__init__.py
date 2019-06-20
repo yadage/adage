@@ -49,12 +49,12 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
     try:
         trackprogress(trackerlist, controller, method = 'initialize')
         for stepnum, controller in enumerate(coroutine):
-            log.debug('polling step begin')
+            log.debug('yielded a controller step. Tracking the workflow.')
             trackprogress(trackerlist, controller)
             if maxsteps and (stepnum+1 == maxsteps):
                 log.info('reached number of maximum iterations ({})'.format(maxsteps))
                 return
-            log.debug('polling step end')
+            log.debug('Tracking done.')
             time.sleep(update_interval)
     except:
         log.exception('some weird exception caught in adage process loop')
@@ -67,11 +67,6 @@ def run_polling_workflow(controller, coroutine, update_interval, trackerlist = N
     if not controller.validate():
         raise RuntimeError('DAG execution not validating')
     log.info('execution valid. (in terms of execution order)')
-
-    if not controller.successful():
-        log.error('raising RunTimeError due to failed jobs')
-        raise RuntimeError('DAG execution failed')
-
 
     log.info('workflow completed successfully.')
 
