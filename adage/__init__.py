@@ -86,6 +86,7 @@ def rundag(adageobj = None,
            backend = None,
            extend_decider = None,
            submit_decider = None,
+           finish_decider = None,
            recursive_updates = True,
            update_interval = 0.01,
            loggername = __name__,
@@ -120,7 +121,7 @@ def rundag(adageobj = None,
 
     ## get primed coroutine for polling-style workflow execution
     # recursive_updates = False
-    coroutine = setup_polling_execution(extend_decider, submit_decider,recursive_updates)
+    coroutine = setup_polling_execution(extend_decider, submit_decider, finish_decider, recursive_updates)
 
     ## prepare tracking objects
     trackerlist = default_trackerlist(workdir, loggername, trackevery) if default_trackers else []

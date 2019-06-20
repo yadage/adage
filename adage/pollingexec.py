@@ -62,7 +62,7 @@ def process_dag(controller,decider):
         log.info('submitting nodes %s', nodes)
         controller.submit_nodes(nodes)
 
-def adage_coroutine(extend_decider,submit_decider,recursive_updates):
+def adage_coroutine(extend_decider,submit_decider,finish_decider,recursive_updates):
     '''
     :param extend_decider: decision coroutine to decide whether to apply applicable rules
     :param submit_decider: decision coroutine to decide whether to submit applicable nodes
@@ -80,7 +80,7 @@ def adage_coroutine(extend_decider,submit_decider,recursive_updates):
     yield
 
     #starting the loop
-    while not controller.finished():
+    while not finish_decider.send(controller):
         controller.sync_backend() #so that we are up to date
         update_dag(controller, extend_decider,recursive_updates)
         process_dag(controller,submit_decider)
@@ -98,9 +98,19 @@ def yes_man(messagestring = 'saying yes.'):
         value = True
         data = yield value
 
+def standard_stop_decider():
+    data = yield
+    while True:
+        log.debug('deciding if to finish: %s',data)
+        #we yield True and wait again to receive some data
+        value = data.finished()
+        data = yield value
+
+
 def setup_polling_execution(
     extend_decider = None,
     submit_decider = None,
+    finish_decider = None,
     recursive_updates = True):
     '''
     sets up the main couroutine and auxiliary decision coroutines for polling-style
@@ -119,9 +129,13 @@ def setup_polling_execution(
         submit_decider = yes_man('say yes to node submission of: %s')
         advance_coroutine(submit_decider) # prime
 
+    if not finish_decider:
+        finish_decider = standard_stop_decider()
+        advance_coroutine(finish_decider) # prime
+
     ## prep main coroutine with deciders..
     log.info('preparing adage coroutine.')
-    coroutine = adage_coroutine(extend_decider,submit_decider, recursive_updates)
+    coroutine = adage_coroutine(extend_decider, submit_decider, finish_decider, recursive_updates)
     advance_coroutine(coroutine) # prime the coroutine....
 
     return coroutine
