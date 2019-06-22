@@ -77,9 +77,10 @@ def submittable_nodes(adageobj):
         nodeobj = dag.getNode(node)
         log.debug("working on node: %s with obj %s",node,nodeobj)
         if nodeobj.submit_time:
-            log.debug("node already submitted. continue")
-            continue;
+            log.debug("node %s already submitted. continue", nodeobj)
+            continue
         if dagstate.upstream_ok(dag,nodeobj):
+            log.debug("node submittable %s", nodeobj)
             yield nodeobj
         # if dagstate.upstream_failure(dag,nodeobj):
         #     log.debug('not yielding node: %s due to upstream failure',node)

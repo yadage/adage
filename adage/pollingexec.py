@@ -56,13 +56,14 @@ def process_dag(controller,decider):
     nodes = []
     for nodeobj in controller.submittable_nodes():
         do_submit = decider.send((nodeobj,controller))
+        log.debug('node submittable %s and decision to submit %s', nodeobj, do_submit)
         if do_submit:
             nodes.append(nodeobj)
     if nodes:
         log.info('submitting nodes %s', nodes)
         controller.submit_nodes(nodes)
 
-def adage_coroutine(extend_decider,submit_decider,recursive_updates):
+def adage_coroutine(extend_decider,submit_decider,finish_decider,recursive_updates):
     '''
     :param extend_decider: decision coroutine to decide whether to apply applicable rules
     :param submit_decider: decision coroutine to decide whether to submit applicable nodes
@@ -80,7 +81,13 @@ def adage_coroutine(extend_decider,submit_decider,recursive_updates):
     yield
 
     #starting the loop
-    while not controller.finished():
+    while True:
+        finished, success = finish_decider.send(controller)
+        log.debug('workflow status finished: %s status: %s', finished, success)
+        if finished:
+            if not success:
+                raise RuntimeError('workflow finished but failed')
+            return
         controller.sync_backend() #so that we are up to date
         update_dag(controller, extend_decider,recursive_updates)
         process_dag(controller,submit_decider)
@@ -98,9 +105,19 @@ def yes_man(messagestring = 'saying yes.'):
         value = True
         data = yield value
 
+def standard_stop_decider():
+    data = yield
+    while True:
+        log.debug('deciding if to finish: %s',data)
+        #we yield True and wait again to receive some data
+        success = data.successful()
+        value   = data.finished()
+        data = yield (value, success)
+
 def setup_polling_execution(
     extend_decider = None,
     submit_decider = None,
+    finish_decider = None,
     recursive_updates = True):
     '''
     sets up the main couroutine and auxiliary decision coroutines for polling-style
@@ -119,9 +136,13 @@ def setup_polling_execution(
         submit_decider = yes_man('say yes to node submission of: %s')
         advance_coroutine(submit_decider) # prime
 
+    if not finish_decider:
+        finish_decider = standard_stop_decider()
+        advance_coroutine(finish_decider) # prime
+
     ## prep main coroutine with deciders..
     log.info('preparing adage coroutine.')
-    coroutine = adage_coroutine(extend_decider,submit_decider, recursive_updates)
+    coroutine = adage_coroutine(extend_decider, submit_decider, finish_decider, recursive_updates)
     advance_coroutine(coroutine) # prime the coroutine....
 
     return coroutine
