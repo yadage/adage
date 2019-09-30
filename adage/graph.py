@@ -31,8 +31,9 @@ class AdageDAG(nx.DiGraph):
     def getNode(self,ident):
         return self.node[ident]['nodeobj']
 
-    def getNodeByName(self,name):
-        matching = [x for x in self.nodes() if self.getNode(x).name == name]
+    def getNodeByName(self,name, nodefilter = None):
+        nodefilter = nodefilter or (lambda x: True)
+        matching = [x for x in self.nodes() if self.getNode(x).name == name and nodefilter(self.getNode(x))]
         if len(matching) > 1:
             log.error('requested name %s',name)
             log.error('matching nodes %s',[self.getNode(x) for x in matching])
