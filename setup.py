@@ -7,6 +7,7 @@ setup(
     version = '0.10.1',
     description = 'running dynamic DAG workflows',
     packages = find_packages(),
+    python_requires = '>=3.6',
     install_requires = [
         'networkx>=2.4'
     ],
