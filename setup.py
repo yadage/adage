@@ -8,7 +8,7 @@ setup(
     description = 'running dynamic DAG workflows',
     packages = find_packages(),
     install_requires = [
-        'networkx==1.11'
+        'networkx>=2.4'
     ],
     extras_require = {
         'develop': [
