@@ -51,7 +51,7 @@ def colorize_graph_at_time(dag,time):
         style = 'filled' if visible else 'invis'
         dot_attr = {'label':'{} '.format(nodeobj.name), 'style':style, 'color': color}
 
-        colorized.add_node(node,dot_attr)
+        colorized.add_node(node, **dot_attr)
         for pre in dag.predecessors(node):
             colorized.add_edge(pre,node)
 
