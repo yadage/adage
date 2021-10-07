@@ -24,4 +24,19 @@ setup(
             'pydotplus'
         ]
     },
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: MIT License",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Physics",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: Implementation :: CPython",
+    ],
 )
