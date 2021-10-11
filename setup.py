@@ -18,7 +18,7 @@ setup(
            'python-coveralls'
         ],
         'viz' : [
-            'pydot2',
+            'pydot',
             'pygraphviz',
             'pydotplus'
         ]

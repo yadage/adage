@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  # Run monthly at 2:03 UTC
+  schedule:
+  - cron:  '3 2 1 * *'
+  workflow_dispatch:
+
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.6", "3.7", "3.8"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install external dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y \
+          graphviz \
+          libgraphviz-dev
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install --no-cache-dir .[develop,viz]
+
+    - name: List installed Python packages
+      run: python -m pip list
+
+    - name: Run unit tests
+      run: |
+        python -m pytest tests

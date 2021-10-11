@@ -1,6 +1,6 @@
 # Adage - A DAG Executor
 
-[![Build Status](https://travis-ci.org/yadage/adage.svg?branch=master)](https://travis-ci.org/yadage/adage)
+[![CI](https://github.com/yadage/adage/actions/workflows/ci.yml/badge.svg)](https://github.com/yadage/adage/actions/workflows/ci.yml?query=branch%3Amaster)
 [![Code Health](https://landscape.io/github/yadage/adage/master/landscape.svg?style=flat)](https://landscape.io/github/yadage/adage/master)
 [![PyPI](https://img.shields.io/pypi/v/adage.svg)](https://pypi.python.org/pypi/adage)
 [![Coverage Status](https://coveralls.io/repos/github/yadage/adage/badge.svg?branch=master)](https://coveralls.io/github/yadage/adage?branch=master)
