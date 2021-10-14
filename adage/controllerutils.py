@@ -55,7 +55,7 @@ def nodes_left_or_rule_applicable(adageobj):
     log.debug('nodes we could run: %s',nodes_we_could_run)
     if nodes_running_or_defined:
         log.debug('%s nodes that could be run or are running are left.',len(nodes_running_or_defined))
-        log.debug('nodes are: %s',[dag.node[n] for n in nodes_running_or_defined])
+        log.debug('nodes are: %s', [dag.nodes[n] for n in nodes_running_or_defined])
         return True
 
     if any(rule.applicable(adageobj) for rule in rules):

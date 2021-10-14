@@ -18,7 +18,7 @@ class AdageDAG(nx.DiGraph):
         return node
 
     def addNode(self,nodeobj,depends_on = None):
-        self.add_node(nodeobj.identifier, {'nodeobj': nodeobj})
+        self.add_node(nodeobj.identifier, nodeobj=nodeobj)
         for parent in (depends_on or []):
             self.addEdge(parent,nodeobj)
 
@@ -29,7 +29,7 @@ class AdageDAG(nx.DiGraph):
         self.add_edge(fromobj.identifier,toobj.identifier)
 
     def getNode(self,ident):
-        return self.node[ident]['nodeobj']
+        return self.nodes[ident]['nodeobj']
 
     def getNodeByName(self,name, nodefilter = None):
         nodefilter = nodefilter or (lambda x: True)

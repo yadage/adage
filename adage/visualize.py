@@ -51,7 +51,7 @@ def colorize_graph_at_time(dag,time):
         style = 'filled' if visible else 'invis'
         dot_attr = {'label':'{} '.format(nodeobj.name), 'style':style, 'color': color}
 
-        colorized.add_node(node,dot_attr)
+        colorized.add_node(node, **dot_attr)
         for pre in dag.predecessors(node):
             colorized.add_edge(pre,node)
 
@@ -65,7 +65,7 @@ def colorize_graph_at_time(dag,time):
 
 def save_dot(dotstring,filename,fileformat):
     with open(filename,'w') as dotoutputfile:
-        p = subprocess.Popen(['dot','-T{}'.format(fileformat),'-Gsize=18,12\!','-Gdpi=100'], stdout = dotoutputfile, stdin = subprocess.PIPE)
+        p = subprocess.Popen(['dot', '-T{}'.format(fileformat), r'-Gsize=18,12\!', '-Gdpi=100'], stdout = dotoutputfile, stdin = subprocess.PIPE)
         p.communicate(dotstring.encode('ascii'))
 
 def print_dag(dag,name,trackdir,time = None):
