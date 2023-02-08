@@ -4,9 +4,6 @@ on:
   push:
     branches:
     - main
-  pull_request:
-    branches:
-    - main
     tags:
     - v*
   pull_request:
@@ -22,7 +19,6 @@ on:
         options:
         - false
         - true
-
 
 jobs:
   build-and-publish:
