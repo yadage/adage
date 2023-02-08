@@ -1,9 +1,9 @@
 # Adage - A DAG Executor
 
-[![CI](https://github.com/yadage/adage/actions/workflows/ci.yml/badge.svg)](https://github.com/yadage/adage/actions/workflows/ci.yml?query=branch%3Amaster)
-[![Code Health](https://landscape.io/github/yadage/adage/master/landscape.svg?style=flat)](https://landscape.io/github/yadage/adage/master)
+[![CI](https://github.com/yadage/adage/actions/workflows/ci.yml/badge.svg)](https://github.com/yadage/adage/actions/workflows/ci.yml?query=branch%3Amain)
+[![Code Health](https://landscape.io/github/yadage/adage/main/landscape.svg?style=flat)](https://landscape.io/github/yadage/adage/main)
 [![PyPI](https://img.shields.io/pypi/v/adage.svg)](https://pypi.python.org/pypi/adage)
-[![Coverage Status](https://coveralls.io/repos/github/yadage/adage/badge.svg?branch=master)](https://coveralls.io/github/yadage/adage?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/yadage/adage/badge.svg?branch=main)](https://coveralls.io/github/yadage/adage?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/adage/badge/?version=latest)](http://adage.readthedocs.io/en/latest/?badge=latest)
 
 This is a small experimental package to see how one could describe workflows that are not completely known at definition time. Tasks should be runnable both in a multiprocessing pool, or using a number of celery workers or a IPython cluster.
